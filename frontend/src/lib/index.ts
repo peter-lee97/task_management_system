@@ -9,3 +9,5 @@ export const baseAPI = axios.create({
 	baseURL: apiUrl,
 	headers: { 'Access-Control-Allow-Origin': '*' }
 });
+
+export const allStatus = ['active', 'disabled'];

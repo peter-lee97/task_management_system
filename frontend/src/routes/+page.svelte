@@ -2,12 +2,8 @@
 	import { AxiosError } from 'axios';
 	import * as AuthAPI from '../services/api/auth';
 	import { onDestroy, onMount } from 'svelte';
-	import { accountStore } from '../store/auth';
-	import type { Account } from '../model';
 	import { goto } from '$app/navigation';
-	import type { PageData } from './$types';
-
-	export let data: PageData;
+	import { authStore, validateAccount } from '$lib/authStore';
 
 	let username: string | undefined;
 	let password: string | undefined;
@@ -15,14 +11,20 @@
 
 	$: showButton = username !== null && password !== null && username !== '' && password !== '';
 
-	onMount(() => {
-		if (data.user != null) {
-			accountStore.set(data.user);
-			goto('/app');
+	onMount(async () => {
+		console.log(`onMount /`);
+		await validateAccount();
+	});
+
+	const authSub = authStore.subscribe((value) => {
+		console.log(`changes in login: ${value != null}`);
+		if (value) {
+			goto('/app_management');
 		}
 	});
 
 	onDestroy(() => {
+		authSub();
 		console.log('/ destroyed');
 	});
 
@@ -32,11 +34,11 @@
 			console.log(`entries are found empty`);
 			return;
 		}
+
 		try {
-			const response = await AuthAPI.login(username, password);
-			console.log(JSON.stringify(response['results']));
-			accountStore.set(response['results'] as Account);
-			goto('/app_management');
+			AuthAPI.login(username, password).then((response) => {
+				authStore.set(response);
+			});
 		} catch (error) {
 			if (error instanceof AxiosError) {
 				if (error.response) {

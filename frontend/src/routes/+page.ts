@@ -1,10 +1,9 @@
-import * as AuthAPI from '../services/api/auth';
+import { validateUser } from '../services/api/auth';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async () => {
 	try {
-		const user = await AuthAPI.fetchUser();
-		console.log(`load user: ${JSON.stringify(user)}`);
+		const user = await validateUser();
 		return {
 			user
 		};

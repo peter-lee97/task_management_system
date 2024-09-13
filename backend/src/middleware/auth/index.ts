@@ -4,6 +4,7 @@ import { AccountDB, getDb } from "../../services/db";
 import { verifyToken } from "../../services/jwt";
 
 /**
+ * [DEPRECATED]
  * Valid Token with `ENV_SECRET`
  * Pass token payload to `req.accountPayload`
  * @param req
@@ -44,7 +45,45 @@ export const validateToken = async (
       account!.username === payload.username,
       "account and payload username should be the same"
     );
-    req.accountPayload = { ...payload, passwordHash: account.password };
+    req.accountPayload = { ...payload };
+    next();
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const validateCookie = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  let token: string | undefined;
+
+  if (!req.cookies["token"]) {
+    console.log("no cookies found");
+    res.status(401).json({ message: "Access expired" });
+    return;
+  }
+  token = req.cookies["token"] as string;
+
+  try {
+    const payload = verifyToken(token, process.env.ENV_SECRET as string);
+    if (!payload) {
+      res.status(401).json({ message: "Not authorized to access" });
+      return;
+    }
+
+    // inject pw hash here
+    const db = getDb();
+    const account = await AccountDB.fetchUser(db, payload.username);
+
+    assert(account != null, "account should not be null");
+
+    assert(
+      account!.username === payload.username,
+      "account and payload username should be the same"
+    );
+    req.accountPayload = { ...payload };
     next();
   } catch (error) {
     return next(error);
@@ -63,12 +102,9 @@ export const adminOnly = (
   res: Response,
   next: NextFunction
 ): void => {
-  console.log("[adminOnly]");
   if (!req.accountPayload) throw "Unhandled error. token is invalid";
   const accountPayload = req.accountPayload!;
-  console.log(
-    `account name: ${accountPayload.username} | isAdmin: ${accountPayload.isAdmin}`
-  );
+
   accountPayload.isAdmin
     ? next()
     : res.status(401).json({ message: "Not authorized to access route" });

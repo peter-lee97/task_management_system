@@ -38,7 +38,6 @@ export const verifyToken = (
       isAdmin: parsePayload["isAdmin"],
       userAgent: parsePayload["userAgent"],
       username: parsePayload["username"],
-      passwordHash: parsePayload["passwordHash"],
     };
   } catch (error) {
     console.error(`Failed to verify token: ${error}`);

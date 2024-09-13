@@ -21,7 +21,7 @@ export const fetchByUsername = async (
   }
 };
 
-export const fetchByGroupName = async (
+export const fetchByGroupname = async (
   db: Connection,
   groupname: string
 ): Promise<UserGroup[]> => {
@@ -38,9 +38,10 @@ export const fetchByGroupName = async (
 
 export const fetchByGroupAndUsername = async (
   db: Connection,
-  username: string,
+  username: string | undefined,
   groupname: string
 ): Promise<UserGroup | null> => {
+  if (username == undefined) username = "";
   const sql =
     "SELECT * FROM UserGroup WHERE user_group = ? AND username = ? LIMIT 1";
   const values = [groupname, username];
@@ -54,7 +55,7 @@ export const fetchByGroupAndUsername = async (
 
 export const addToGroup = async (
   db: Connection,
-  username: string,
+  username: string | undefined,
   usergroup: string
 ): Promise<void> => {
   const sql = `
@@ -62,12 +63,30 @@ export const addToGroup = async (
     VALUES (?, ?)
   `;
 
+  if (username == undefined) username = "";
+
   const values = [username, usergroup];
   try {
     const [result] = await db.execute<ResultSetHeader>(sql, values);
     console.log(
-      `new entry ${result.affectedRows} in user group: ${username} | ${usergroup}`
+      `new entry ${result.affectedRows} in user group: ${username}|${usergroup}`
     );
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const removeFromGroup = async (
+  db: Connection,
+  username: string | undefined,
+  usergroup: string
+): Promise<void> => {
+  const sql = "DELETE FROM UserGroup WHERE username = ? AND user_group = ?";
+  const values = [username, usergroup];
+  try {
+    const [result] = await db.execute<ResultSetHeader>(sql, values);
+    console.log(`remove ${username} from ${usergroup}`);
+    console.log(`new entry ${result} in user group: ${username}|${usergroup}`);
   } catch (error) {
     throw error;
   }

@@ -2,7 +2,9 @@ import { NextFunction, Request, Response } from "express";
 import { getDb, UserGroupDB } from "../../services/db";
 import {
   addToGroup,
+  Checkgroup,
   fetchByGroupAndUsername,
+  removeFromGroup,
 } from "../../services/db/user_group";
 
 // Use fetch all usergroup rows with username
@@ -14,7 +16,7 @@ export const fetchUserGroups = async (
   const db = getDb();
   const { username } = req.query;
   if (!username) {
-    res.status(400).send({ message: "Username field cannot be empty" });
+    res.status(400).send({ message: "Username query params cannot be empty" });
     return;
   }
 
@@ -34,29 +36,71 @@ export const fetchUserGroups = async (
   }
 };
 
-export const addUserToGroup = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const fetchGroups = async (req: Request, res: Response) => {
+  const db = getDb();
+
+  try {
+    const [result] = await db.query(
+      "SELECT DISTINCT user_group FROM usergroup ORDER BY user_group;"
+    );
+
+    const groups = Object.entries(result).map(
+      ([_, value]) => value["user_group"] as string
+    );
+
+    res.status(200).json({ result: groups, message: "success" });
+  } catch (error) {
+    res.status(400).json({ message: "failed to fetch groups" });
+  }
+};
+
+export const removeUserFromGroup = async (req: Request, res: Response) => {
+  const username = req.query["username"] as string;
+  const usergroup = req.query["usergroup"] as string;
+
+  if (!username || !usergroup) {
+    res.status(400).send({ message: "username and usergroup fields required" });
+    return;
+  }
+  const db = getDb();
+  const inGroup = await Checkgroup(db, username, usergroup);
+  if (!inGroup) {
+    return res.status(200).send({ message: "successfully updated" });
+  }
+
+  if (
+    username == "admin" &&
+    req.accountPayload?.isAdmin &&
+    usergroup === "ADMIN"
+  ) {
+    console.log("should not remove admin from ADMIN");
+    return res.status(200).send({ message: "successfully updated" });
+  }
+
+  await removeFromGroup(db, username, usergroup);
+  res.status(200).send({ message: "update successful" });
+};
+
+export const addUserToGroup = async (req: Request, res: Response) => {
   const db = getDb();
   const { username, usergroup } = req.body;
-  if (!usergroup || !username) {
-    res
-      .status(400)
-      .send({ message: "UserGroup and Username fields cannot be empty" });
+  if (!usergroup) {
+    res.status(400).send({ message: "UserGroup field cannot be empty" });
     return;
   }
 
   try {
-    let group = await fetchByGroupAndUsername(db, username ?? "", usergroup);
-    if (group) {
+    const inGroup = await Checkgroup(db, username, usergroup);
+
+    if (inGroup) {
       res.status(400).send({ message: "entry already exists" }).end();
       return;
     }
-    await addToGroup(db, username ?? "", usergroup);
-    group = await fetchByGroupAndUsername(db, username, usergroup);
-    res.status(200).send({ message: "success", result: group }).end();
+
+    await addToGroup(db, username, usergroup);
+    const group = await fetchByGroupAndUsername(db, username, usergroup);
+    console.log(`group added: ${JSON.stringify(group)}`);
+    res.status(200).send({ message: "success", result: group });
   } catch (error) {
     if (error instanceof Error) {
       console.error(error);

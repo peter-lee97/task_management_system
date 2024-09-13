@@ -7,7 +7,6 @@ export { UserGroup } from "./user_group";
 export interface AccountPayload {
   isAdmin: boolean;
   username: string;
-  passwordHash: string;
   ipAddress: string | undefined;
   userAgent: string | undefined;
 }

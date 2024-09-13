@@ -1,23 +1,17 @@
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import { config } from "dotenv";
 import express from "express";
-import createConnection, { getDb } from "./services/db";
 
-import session from "express-session";
 import { auth, usergroup } from "./routes/";
+import createConnection, { getDb } from "./services/db";
 
 // configures dotenv to work in your application
 config();
 
 const app = express();
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET as string,
-    resave: false,
-    saveUninitialized: true,
-  })
-);
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 
 app.use(express.json());
 app.use(cookieParser());
@@ -39,7 +33,7 @@ const init = async () => {
   app.get("/", (_, response) => {
     response.status(200).send(`
       <body>
-        <h1> Main page</h1>
+        <h1>Main page</h1>
       </body>
       `);
   });

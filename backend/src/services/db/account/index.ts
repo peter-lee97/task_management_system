@@ -9,8 +9,17 @@ export const fetchUser = async (
   const values = [username];
   try {
     const [result] = await db.query<Account[]>(sql, values);
-    console.log(`fetched ${result.length} accounts`);
     return result.length > 0 ? result[0] : null;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchAllUsers = async (db: Connection): Promise<Account[]> => {
+  const sql = "SELECT * FROM accounts ORDER BY username";
+  try {
+    const [result] = await db.query<Account[]>(sql);
+    return result;
   } catch (error) {
     throw error;
   }
@@ -21,10 +30,10 @@ export const createUser = async (
   account: Account
 ): Promise<Account | null> => {
   try {
-    const [inserted] = await db.execute<ResultSetHeader>(`
-        INSERT INTO accounts (username, password, email)
-        VALUES ('${account.username}', '${account.password}', '${account.email}')
-        `);
+    const sql =
+      "INSERT INTO accounts (username, password, email) VALUES (?, ?, ?)";
+    const values = [account.username, account.password, account.email ?? null];
+    const [inserted] = await db.execute<ResultSetHeader>(sql, values);
     if (inserted.affectedRows == 0) return null;
   } catch (error) {
     throw error;
@@ -40,7 +49,7 @@ export const updateUser = async (
     const sql =
       "UPDATE `accounts` SET email = ? , password = ?, accountStatus = ? WHERE username = ? LIMIT 1";
     const values = [
-      account.email,
+      account.email ?? null,
       account.password,
       account.accountStatus,
       account.username,

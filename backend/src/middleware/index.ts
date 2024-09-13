@@ -1,1 +1,0 @@
-export { validateToken } from "./auth";

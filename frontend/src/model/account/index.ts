@@ -5,3 +5,10 @@ export interface Account extends Object {
 	email?: string | null;
 	accountStatus: string;
 }
+
+export interface AccountUpdate {
+	username: string;
+	password?: string;
+	email?: string;
+	accountStatus?: string;
+}

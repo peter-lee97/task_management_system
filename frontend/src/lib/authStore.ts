@@ -31,7 +31,7 @@ export const validateAccount = async () => {
 	authStore.set(newAccount);
 };
 
-export const logoutAccount = async () => {
-	await logout();
+export const logoutAccount = () => {
+	logout();
 	setAccount(null);
 };

@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 
-import assert from "node:assert";
 import { Account } from "../../model";
 import { AccountDB, getDb, UserGroupDB } from "../../services/db";
 import { compareHash, generateToken, hashPassword } from "../../services/jwt";
@@ -77,7 +76,7 @@ export async function login(req: Request, res: Response): Promise<void> {
         maxAge: 1000 * 60 * 60 * 5, // 5 hours for now
       })
       .status(200)
-      .json({ message: "success", results: account, jwt: token });
+      .json({ message: "success", result: account, jwt: token });
     return;
   } catch (error) {
     console.error(`failed to query for login: ${error}`);
@@ -171,17 +170,18 @@ export const updateCredentials = async (
     });
     return;
   }
-  const copyAccount = { ...fetchAccount };
+  const copyAccount = Object.assign({}, fetchAccount);
 
   if (password) {
     const isSame = await compareHash(password, fetchAccount.password);
     if (!isSame) {
-      copyAccount["password"] = await hashPassword(password, 2);
+      copyAccount.password = await hashPassword(password, 2);
       console.log(`hash password: ${copyAccount["password"]}`);
     }
   }
 
-  copyAccount["email"] = email;
+  if (email != null) copyAccount.email = email;
+  if (accountStatus != null) copyAccount.accountStatus = accountStatus;
 
   try {
     const updatedAccount = await AccountDB.updateUser(db, copyAccount);
@@ -193,37 +193,6 @@ export const updateCredentials = async (
   }
 };
 
-// [Deprecated]
-export const updatePassword = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const { password } = req.body;
-  if (!password) {
-    return res.status(400).send({ message: "Password field required" });
-  }
-  const db = getDb();
-
-  const accountPayload = req.accountPayload;
-
-  if (!accountPayload) {
-    res.status(500).json({ message: "failed internal check" });
-    return;
-  }
-  const fetchAccount = await AccountDB.fetchUser(db, accountPayload.username);
-
-  if (fetchAccount == null)
-    return res.status(400).send({ message: "Account not found" });
-
-  const newAccount = await AccountDB.updateUser(db, {
-    ...fetchAccount,
-    password: await hashPassword(password, 2),
-  });
-
-  return res.status(200).send({ message: newAccount }).end();
-};
-
 export const fetchUsers = async (
   req: Request,
   res: Response
@@ -231,88 +200,16 @@ export const fetchUsers = async (
   const db = getDb();
 
   if (req.query["username"] != null) {
-    console.log("[user]:", req.query["username"]);
+    console.log("[fetch user]:", req.query["username"]);
     const username = req.query["username"] as string;
     const account = await AccountDB.fetchUser(db, username);
     res.status(200).send({ message: "success", result: account });
     return;
   }
-  console.log("[users]");
-  const account = await AccountDB.fetchAllUsers(db);
-  res.status(200).send({ message: "success", result: account });
-  return;
-};
-
-// Deprecated
-export const adminUpdateCredentials = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  console.log("[adminUpdateCredentials]");
-  const { accountStatus, email, username, password } = req.body;
-  if (!username) {
-    res.status(400).json({ message: "username required to update" });
-    return;
-  }
-  if (!accountStatus && !email && !password) {
-    res.status(200).json({ message: "nothing updated" });
-    return;
-  }
-
-  const db = getDb();
-  const account = await AccountDB.fetchUser(db, username);
-  assert(account != null, "account should not be null");
-
-  // TODO: prevent other ppl to change `ADMIN` information
-  if (username === "admin") {
-    res
-      .status(401)
-      .json({ message: "unable to make changes, please contact admin" });
-    return;
-  }
-  const updatedAccount = await AccountDB.updateUser(db, {
-    ...account,
-    ...(email ? { email } : null),
-    accountStatus: accountStatus ?? account.accountStatus,
-    password: await hashPassword(password, 2),
-  });
-
-  res
-    .status(200)
-    .json({ message: "successfully update", result: updatedAccount });
-  return;
-};
-
-/// deprecated
-export const adminResetAccount = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  console.log("[adminResetAccount]");
-  const username = req.query["username"] as string;
-  if (!username) {
-    res.status(400).json({ message: "username cannot be empty" });
-    return;
-  }
-  const db = getDb();
-  const userAccount = await AccountDB.fetchUser(db, username);
-
-  if (!userAccount) {
-    res.status(400).json({ message: "Account not found" });
-    return;
-  }
-
-  const updateAccount = await AccountDB.updateUser(db, {
-    ...userAccount!,
-    email: null,
-    accountStatus: "active",
-    password: await hashPassword("test", 2),
-  });
-
-  res
-    .status(200)
-    .send({ message: "update successfully", result: updateAccount });
-
+  console.log("[fetchUsers]");
+  const accounts = await AccountDB.fetchAllUsers(db);
+  console.log(`accounts: ${accounts.length}`);
+  res.status(200).send({ message: "success", result: accounts });
   return;
 };
 

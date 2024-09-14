@@ -27,7 +27,7 @@
 				accountStatus,
 				password,
 				username,
-				...(email != null ? { email: null } : null)
+				...(email != null ? { email } : null)
 			}
 		};
 		console.log(`newgroup: ${newGroup}`);
@@ -96,9 +96,15 @@
 	select {
 		width: 100%;
 		max-width: 100%;
-		height: 100%;
+		height: 30px;
 		max-height: 100%;
-		padding: 1px;
-		box-sizing: border-box; /* Include padding in the width calculation */
+		box-sizing: border-box;
+		border: 0px;
+	}
+	td {
+		padding: 0px 10px;
+	}
+	tr {
+		border-bottom: 1px solid #eff4fa;
 	}
 </style>

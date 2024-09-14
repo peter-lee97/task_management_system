@@ -15,11 +15,9 @@
 </script>
 
 <button class="custom-tag" on:click={onTapHandler}>
-	<span>{value}</span>
+	<span class="text-tag">{value}</span>
 	<Fa icon={faTrash}></Fa>
 </button>
-
-<!-- <div class="custom-tag"></div> -->
 
 <style>
 	.custom-tag {
@@ -29,10 +27,15 @@
 		border-radius: 12px;
 		background-color: lightgrey;
 		padding: 4px 8px;
-		margin: 0px 2px;
+		gap: 4px;
 		font-size: 12px;
+		border: none;
+		margin-right: 4px;
 	}
 	.custom-tag:hover {
 		background-color: lightcoral;
+	}
+	.text-tag {
+		margin-right: 4px;
 	}
 </style>

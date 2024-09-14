@@ -1,9 +1,12 @@
 <script lang="ts">
+	import '../app.css';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
+	import { page } from '$app/stores';
 	import { authStore, isAdminReadable, logoutAccount } from '$lib/authStore';
 	import { Toaster, toast } from 'svelte-sonner';
 	import EditProfileModal from './EditProfileModal.svelte';
+
 	$: account = $authStore;
 
 	let showProfile = false;
@@ -12,36 +15,45 @@
 		console.log(`changes in account: ${acc != null}`);
 		if (acc == null) {
 			if (browser) {
-				goto('/');
+				goto('/login');
 			}
 		}
 	});
+
+	let isPath = (name: string): boolean => {
+		return $page.url.pathname === name;
+	};
 </script>
 
-<nav style="display:block">
+<nav>
 	{#if account != null}
-		<div>
-			Hello {account.username}
-		</div>
+		<h1>
+			Hello, {account.username}
+		</h1>
 	{/if}
-	<button
-		class="system btn"
-		on:click={() => {
-			goto('/app_management');
-			console.log('Application pressed');
-		}}>Application</button
-	>
-	{#if $isAdminReadable}
+	<div>
 		<button
-			class="system btn"
+			class="system-button"
+			class:active={isPath('/app_management')}
 			on:click={() => {
-				console.log('User Management');
-				goto('/user_management');
-			}}>User Management</button
+				goto('/app_management');
+				console.log('Application pressed');
+			}}>Application</button
 		>
-	{/if}
+		{#if $isAdminReadable}
+			<button
+				class="system-button"
+				class:active={isPath('/user_management')}
+				on:click={() => {
+					console.log('User Management');
+					goto('/user_management');
+				}}>User Management</button
+			>
+		{/if}
+	</div>
 	{#if account != null}
 		<button
+			class="system-button profile"
 			on:click={() => {
 				showProfile = !showProfile;
 			}}
@@ -50,9 +62,11 @@
 		</button>
 	{/if}
 	<button
+		class="logout-button"
+		type="button"
 		on:click={() => {
 			logoutAccount();
-			goto('/');
+			goto('/login');
 		}}>Sign out</button
 	>
 </nav>
@@ -61,6 +75,44 @@
 	on:notification={(event) => {
 		toast(event.detail.message);
 	}}
-></EditProfileModal>
+/>
 
 <Toaster />
+
+<style>
+	nav {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 20px;
+		background-color: black;
+		color: whitesmoke;
+	}
+
+	.logout-button {
+		color: white;
+		border: none;
+		background-color: inherit;
+		cursor: pointer;
+		padding: 10px;
+		font-size: 16px;
+	}
+
+	.system-button {
+		background-color: inherit;
+		border: none;
+		cursor: pointer;
+		display: inline-block;
+		color: inherit;
+		font-size: 20px;
+	}
+
+	.profile {
+		text-decoration: underline;
+		font-weight: 600;
+	}
+
+	button.active {
+		text-decoration: underline;
+	}
+</style>

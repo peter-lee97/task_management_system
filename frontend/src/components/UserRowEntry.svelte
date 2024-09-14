@@ -9,6 +9,8 @@
 	import { groupStore } from '$lib/groupStore';
 	import { compareAccount, validateEmail, validatePassword } from '$lib/validate';
 	import { removeFromGroup } from '../services/api/user_group';
+	import EditIcon from './icons/EditIcon.svelte';
+	import type { AccountUpdate } from '../model/account';
 
 	export let account: Account;
 	export let userGroups: UserGroup[] | null;
@@ -28,15 +30,20 @@
 	let newStatus: string = account.accountStatus;
 
 	const eventDispatcher = createEventDispatcher<{
-		submit: { newAccount?: Account; newGroup?: string | null };
+		submit: {
+			newAccount?: AccountUpdate;
+			newGroup?: string | null;
+		};
 		notification: { message?: string; errorMessage?: string };
 	}>();
 
 	function submitHandler() {
-		const payload: { newAccount?: Account; newGroup?: string | null } = {};
-		const dirtyAccount = Object.assign({}, account);
+		const payload: {
+			newAccount?: AccountUpdate;
+			newGroup?: string | null;
+		} = {};
 
-		if (newPassword != null) {
+		if (newPassword) {
 			const errorMessage = validatePassword(newPassword);
 			if (errorMessage) {
 				eventDispatcher('notification', { errorMessage });
@@ -57,15 +64,14 @@
 			if (!groupExists) payload['newGroup'] = newGroup;
 		}
 
-		dirtyAccount.email = newEmail;
-		if (newPassword) dirtyAccount.password = newPassword;
-		dirtyAccount.accountStatus = newStatus;
-
-		const sameValue = compareAccount(account, dirtyAccount);
-
 		const called = eventDispatcher('submit', {
 			...payload,
-			...(sameValue ? null : { newAccount: dirtyAccount })
+			newAccount: {
+				username: account.username,
+				...(newEmail != null ? { email: newEmail } : undefined),
+				...(newPassword != null ? { password: newPassword } : undefined),
+				...(account.accountStatus != newStatus ? { accountStatus: newStatus } : undefined)
+			}
 		});
 
 		if (called) isEditProfile = false;
@@ -135,12 +141,36 @@
 	</td>
 	<td>
 		{#if !isEditProfile}
-			<button on:click={toggleEdit}>
-				<Fa icon={faEdit} />
+			<button id="edit-button" on:click={toggleEdit}>
+				<EditIcon />
 			</button>
 		{:else}
-			<button on:click={submitHandler}> Save Changes </button>
-			<button on:click={toggleEdit}> Cancel </button>
+			<button type="submit" on:click={submitHandler}> Save Changes </button>
+			<button type="button" on:click={toggleEdit}> Cancel </button>
 		{/if}
 	</td>
 </tr>
+
+<style>
+	td {
+		padding: 20px;
+	}
+
+	select {
+		max-height: 100%;
+	}
+
+	tr {
+		border-bottom: 1px solid #eff4fa;
+	}
+
+	#edit-button {
+		background-color: inherit;
+		border: 0px;
+	}
+	#edit-button:hover {
+		background-color: inherit;
+		border: 0px;
+		cursor: pointer;
+	}
+</style>

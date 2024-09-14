@@ -1,6 +1,7 @@
-import { baseAPI } from '$lib';
+import { baseAPI, unexpectedError } from '$lib';
 import { AxiosError } from 'axios';
 import type { Account } from '../../model';
+import type { AccountUpdate } from '../../model/account';
 
 export const login = async (username: string, password: string): Promise<Account> => {
 	try {
@@ -8,12 +9,12 @@ export const login = async (username: string, password: string): Promise<Account
 			username,
 			password
 		});
-		return response.data['results'];
+		return response.data['result'];
 	} catch (error) {
 		if (error instanceof AxiosError) {
-			console.log(error.code);
+			throw error.response!.data['message'];
 		}
-		throw error;
+		throw unexpectedError;
 	}
 };
 
@@ -29,17 +30,16 @@ export const register = async (account: Account): Promise<Account | null> => {
 		return response.data['result'];
 	} catch (error) {
 		if (error instanceof AxiosError) {
-			console.error(error.message);
-			throw error.message;
+			throw error.response!.data['message'];
 		}
-		throw 'failed to register user';
+		throw unexpectedError;
 	}
 };
 
-export const logout = async () => {
+export const logout = () => {
 	console.log(`[logout]`);
 	try {
-		await baseAPI.post('/auth/logout');
+		baseAPI.post('/auth/logout');
 	} catch (error) {
 		console.error(`failed to logout: ${error}`);
 	}
@@ -89,7 +89,7 @@ export const fetchAllUsers = async (): Promise<Account[]> => {
 	return response.data['result'];
 };
 
-export const updateUser = async (account: Account): Promise<Account> => {
+export const updateUser = async (account: AccountUpdate): Promise<Account> => {
 	try {
 		const response = await baseAPI.put('/auth/update', account, {
 			params: { username: account.username }

@@ -1,0 +1,40 @@
+/* Style for input fields */
+input {
+	margin: 8px 0px;
+	width: 100%;
+	padding: 10px; /* Add some padding to make inputs more readable */
+	border: 1px solid #ccc;
+	font-size: 16px;
+	box-sizing: border-box; /* Ensure padding does not affect width */
+}
+
+input[type='text'],
+input[type='email'],
+input[type='password'] {
+	background-color: #f0f0f0;
+}
+
+/* Style for submit button */
+input[type='submit'],
+input[type='button'] {
+	background-color: black;
+	color: white;
+	border: none;
+	cursor: pointer;
+	padding: 10px;
+	width: 100%;
+	font-size: 16px;
+}
+
+input[type='submit']:hover {
+	background-color: #333; /* Darker on hover */
+}
+
+input[type='submit']:disabled {
+	background-color: rgb(215, 215, 215);
+	cursor: not-allowed;
+}
+
+select {
+	background-color: #f0f0f0;
+}

@@ -6,18 +6,23 @@
 	import { authStore, isAdminReadable, logoutAccount } from '$lib/authStore';
 	import { Toaster, toast } from 'svelte-sonner';
 	import EditProfileModal from './EditProfileModal.svelte';
+	import { onDestroy } from 'svelte';
 
 	$: account = $authStore;
 
 	let showProfile = false;
 
-	authStore.subscribe((acc) => {
+	const sub = authStore.subscribe((acc) => {
 		console.log(`changes in account: ${acc != null}`);
 		if (acc == null) {
 			if (browser) {
 				goto('/login');
 			}
 		}
+	});
+
+	onDestroy(() => {
+		sub();
 	});
 
 	let isPath = (name: string): boolean => {
@@ -109,7 +114,7 @@
 
 	.profile {
 		text-decoration: underline;
-		font-weight: 600;
+		font-size: 16px;
 	}
 
 	button.active {

@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { toast, Toaster } from 'svelte-sonner';
 	import { groupStore } from '$lib/groupStore';
-	import { validateAccount } from '$lib/authStore';
+	import { isAdminReadable, validateAccount } from '$lib/authStore';
 	import type { Account, UserGroup } from '../../model';
 	import { fetchAllUsers, register, updateUser } from '../../services/api/auth';
 	import { addGroup, fetchUserGroups } from '../../services/api/user_group';
@@ -17,14 +17,16 @@
 		console.log(`onMount userManagement`);
 		await validateAccount();
 
-		const accounts = await fetchAllUsers();
-		groupStore.fetch();
-		accounts.forEach((acc) => {
-			userAccounts[acc.username] = acc;
-			fetchUserGroups(acc.username).then((groups) => {
-				userGroups[acc.username] = groups;
+		if ($isAdminReadable) {
+			const accounts = await fetchAllUsers();
+			groupStore.fetch();
+			accounts.forEach((acc) => {
+				userAccounts[acc.username] = acc;
+				fetchUserGroups(acc.username).then((groups) => {
+					userGroups[acc.username] = groups;
+				});
 			});
-		});
+		}
 	});
 	let userAccounts: Record<string, Account> = {};
 	let userGroups: Record<string, UserGroup[]> = {};
@@ -141,7 +143,7 @@
 	table {
 		margin-left: auto;
 		margin-right: auto;
-		width: auto;
+		width: 80%;
 		border-collapse: collapse;
 	}
 	thead {

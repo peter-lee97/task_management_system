@@ -102,7 +102,8 @@
 		border: 0px;
 	}
 	td {
-		padding: 0px 10px;
+		min-height: 40px;
+		padding: 4px 6px;
 	}
 	tr {
 		border-bottom: 1px solid #eff4fa;

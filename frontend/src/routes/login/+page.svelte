@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { AxiosError } from 'axios';
-	import * as AuthAPI from '../../services/api/auth';
 	import { onDestroy, onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { authStore, validateAccount } from '$lib/authStore';
+	import '../../app.css';
+	import { login } from '../../services/api/auth';
 
 	let username: string | undefined;
 	let password: string | undefined;
@@ -28,7 +29,7 @@
 		console.log('/ destroyed');
 	});
 
-	async function login() {
+	async function loginHandler() {
 		console.log(`username: ${username} | password: ${password}`);
 		if (username == undefined || password == undefined) {
 			console.log(`entries are found empty`);
@@ -36,9 +37,9 @@
 		}
 
 		try {
-			AuthAPI.login(username, password).then((response) => {
-				authStore.set(response);
-			});
+			const response = await login(username, password);
+			authStore.set(response);
+			goto('/app_management');
 		} catch (error) {
 			if (error instanceof AxiosError) {
 				if (error.response) {
@@ -55,7 +56,7 @@
 
 <body>
 	<div class="login-div">
-		<form on:submit|preventDefault={login}>
+		<form on:submit|preventDefault={loginHandler}>
 			<div class="login-title">Login</div>
 			<input type="text" bind:value={username} placeholder="Username" />
 			<br />
@@ -69,8 +70,6 @@
 </body>
 
 <style>
-	@import '../../app.css';
-
 	body {
 		margin: 0;
 		height: 100vh;

@@ -1,5 +1,6 @@
-import { readable, writable } from 'svelte/store';
+import { get, readable, writable } from 'svelte/store';
 import type { Account } from '../model';
+import type { AccountUpdate } from '../model/account';
 import { logout, validateUser } from '../services/api/auth';
 
 export const authStore = writable<Account | null>();
@@ -23,6 +24,18 @@ export const isAdminReadable = readable(false, (set) => {
 
 export const setAccount = (account: Account | null) => {
 	authStore.set(account);
+};
+
+/**
+ * compare fields that can be changed by user
+ * @param update
+ * @returns
+ */
+export const checkAccountChange = (update: AccountUpdate): boolean => {
+	const current = get(authStore);
+	if (current?.email !== update.email) return false;
+	if (update.password !== null && update.password !== undefined) return false;
+	return true;
 };
 
 export const validateAccount = async () => {

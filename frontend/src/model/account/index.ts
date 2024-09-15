@@ -9,6 +9,6 @@ export interface Account extends Object {
 export interface AccountUpdate {
 	username: string;
 	password?: string;
-	email?: string;
+	email?: string | null;
 	accountStatus?: string;
 }

@@ -4,18 +4,11 @@ import type { Account } from '../../model';
 import type { AccountUpdate } from '../../model/account';
 
 export const login = async (username: string, password: string): Promise<Account> => {
-	try {
-		const response = await baseAPI.post('/auth/login', {
-			username,
-			password
-		});
-		return response.data['result'];
-	} catch (error) {
-		if (error instanceof AxiosError) {
-			throw error.response!.data['message'];
-		}
-		throw unexpectedError;
-	}
+	const response = await baseAPI.post('/auth/login', {
+		username,
+		password
+	});
+	return response.data['result'];
 };
 
 export const register = async (account: Account): Promise<Account | null> => {

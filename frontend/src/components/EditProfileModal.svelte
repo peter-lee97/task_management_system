@@ -1,21 +1,34 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
+	import '../app.css';
 	import Modal from './Modal.svelte';
-	import { authStore } from '$lib/authStore';
-	import type { Account } from '../model';
+	import { authStore, checkAccountChange } from '$lib/authStore';
 	import { updateUser } from '../services/api/auth';
+	import type { AccountUpdate } from '../model/account';
 
 	onMount(() => {
-		if ($authStore) accountCopy = { ...$authStore };
+		if ($authStore)
+			accountCopy = {
+				username: $authStore.username,
+				email: $authStore.email
+			};
 	});
 
 	export let showModal: boolean;
-	let accountCopy: Account | null;
+	let accountCopy: AccountUpdate | null;
 
 	const dispatch = createEventDispatcher<{ notification: { message: string } }>();
 
 	async function submitHandler() {
 		if (accountCopy == null) return;
+
+		// compare original and copy
+		const isSame = checkAccountChange(accountCopy);
+		if (isSame) {
+			console.log('no changes in account');
+			showModal = false;
+			return;
+		}
 
 		updateUser(accountCopy).then((updatedAccount) => {
 			authStore.set(updatedAccount);
@@ -42,7 +55,12 @@
 				</div>
 				<div class="entry-component">
 					<label for="password">Password</label>
-					<input class="input-component" type="password" placeholder="********" />
+					<input
+						class="input-component"
+						type="password"
+						placeholder="********"
+						bind:value={accountCopy.password}
+					/>
 				</div>
 			</div>
 			<div class="form-buttons">
@@ -56,8 +74,6 @@
 </Modal>
 
 <style>
-	@import '../app.css';
-
 	.edit-profile-form {
 		padding: 10px 80px;
 	}

@@ -1,13 +1,11 @@
 <script lang="ts">
-	import Fa from 'svelte-fa';
-	import { faEdit } from '@fortawesome/free-solid-svg-icons';
 	import { createEventDispatcher, onMount } from 'svelte';
-
-	import type { Account, UserGroup } from '../model';
-	import UserGroupsEntry from './UserGroupsEntry.svelte';
 	import { allStatus } from '$lib';
 	import { groupStore } from '$lib/groupStore';
-	import { compareAccount, validateEmail, validatePassword } from '$lib/validate';
+	import { validateEmail, validatePassword } from '$lib/validate';
+	import '../app.css';
+	import type { Account, UserGroup } from '../model';
+	import UserGroupsEntry from './UserGroupsEntry.svelte';
 	import { removeFromGroup } from '../services/api/user_group';
 	import EditIcon from './icons/EditIcon.svelte';
 	import type { AccountUpdate } from '../model/account';
@@ -139,38 +137,61 @@
 			</select>
 		{/if}
 	</td>
-	<td>
+	<td width="100px" style="align-content: center;">
 		{#if !isEditProfile}
-			<button id="edit-button" on:click={toggleEdit}>
+			<button class="action-button edit" on:click={toggleEdit}>
 				<EditIcon />
 			</button>
 		{:else}
-			<button type="submit" on:click={submitHandler}> Save Changes </button>
-			<button type="button" on:click={toggleEdit}> Cancel </button>
+			<div class="edit-actions">
+				<button class="action-button" type="submit" on:click|preventDefault={submitHandler}>
+					Save Changes
+				</button>
+				<button class="action-button" type="button" on:click={toggleEdit}> Cancel </button>
+			</div>
 		{/if}
 	</td>
 </tr>
 
 <style>
 	td {
-		padding: 20px;
+		padding: 4px 6px;
 	}
 
 	select {
+		width: 100%;
+		max-width: 100%;
+		height: 30px;
 		max-height: 100%;
+		box-sizing: border-box;
+		border: 0px;
 	}
 
 	tr {
 		border-bottom: 1px solid #eff4fa;
 	}
+	.action-button {
+		color: white;
+		background-color: black;
+		font-size: 10;
+		font-weight: 400;
+		width: 100%;
+		padding: 4px 0px;
+		cursor: pointer;
+	}
 
-	#edit-button {
+	.edit-actions {
+		height: 60px;
+		display: block;
+		width: 100%;
+	}
+
+	.edit {
 		background-color: inherit;
 		border: 0px;
 	}
-	#edit-button:hover {
+	.edit:hover {
 		background-color: inherit;
 		border: 0px;
-		cursor: pointer;
 	}
 </style>

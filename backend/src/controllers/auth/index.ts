@@ -19,8 +19,8 @@ export async function login(req: Request, res: Response): Promise<void> {
   try {
     const account = await AccountDB.fetchUser(db, username);
     if (!account) {
-      console.log(`account not found: ${username}`);
-      res.status(400).json({ message: "Account not found" });
+      console.log("cannot find account");
+      res.status(400).json({ message: "Invalid credentials" });
       return;
     }
 
@@ -41,16 +41,16 @@ export async function login(req: Request, res: Response): Promise<void> {
       isAdmin = filter.length > 0;
     }
 
+    if (username === "admin") {
+      console.log("checking for root admin");
+      if (password !== account.password) {
+        res.status(400).send({ message: "Invalid Credentials" });
+      }
+    }
     if (
-      username != "admin" &&
+      username !== "admin" &&
       !(await compareHash(password, account.password))
     ) {
-      res.status(400).send({ message: "Invalid Credentials" });
-      return;
-    }
-
-    if (username === "admin" && password != account.password) {
-      console.log("Checking for root admin");
       res.status(400).send({ message: "Invalid Credentials" });
       return;
     }
@@ -211,10 +211,4 @@ export const fetchUsers = async (
   console.log(`accounts: ${accounts.length}`);
   res.status(200).send({ message: "success", result: accounts });
   return;
-};
-
-export const deleteUser = async (req: Request, res: Response) => {
-  if (req.query[""]) {
-    // TODO:
-  }
 };

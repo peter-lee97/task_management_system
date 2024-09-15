@@ -5,8 +5,8 @@ export { Task } from "./task";
 export { UserGroup } from "./user_group";
 
 export interface AccountPayload {
-  isAdmin: boolean;
   username: string;
+  isAdmin: boolean;
   ipAddress: string | undefined;
   userAgent: string | undefined;
 }

@@ -3,55 +3,6 @@ import assert from "node:assert";
 import { AccountDB, getDb } from "../../services/db";
 import { verifyToken } from "../../services/jwt";
 
-/**
- * [DEPRECATED]
- * Valid Token with `ENV_SECRET`
- * Pass token payload to `req.accountPayload`
- * @param req
- * @param res
- * @param next
- * @returns
- */
-export const validateToken = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  console.log("[validateToken]");
-  let token: string | undefined;
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-  }
-
-  if (!token) return next(Error("Not authorized to access route"));
-
-  try {
-    const payload = verifyToken(token, process.env.ENV_SECRET as string);
-    if (!payload) {
-      next(Error("Not authorized to access route"));
-      return;
-    }
-
-    // inject pw hash here
-    const db = getDb();
-    const account = await AccountDB.fetchUser(db, payload.username);
-
-    assert(account != null, "account should not be null");
-
-    assert(
-      account!.username === payload.username,
-      "account and payload username should be the same"
-    );
-    req.accountPayload = { ...payload };
-    next();
-  } catch (error) {
-    return next(error);
-  }
-};
-
 export const validateCookie = async (
   req: Request,
   res: Response,

@@ -5,22 +5,44 @@
 	import { authStore, checkAccountChange } from '$lib/authStore';
 	import { updateUser } from '../services/api/auth';
 	import type { AccountUpdate } from '../model/account';
+	import { validateEmail, validatePassword } from '$lib/validate';
 
 	onMount(() => {
-		if ($authStore)
-			accountCopy = {
-				username: $authStore.username,
-				email: $authStore.email
-			};
+		authStore.subscribe((a) => {
+			if (a == null) {
+				accountCopy = null;
+				return;
+			} else {
+				accountCopy = { username: a?.username, email: a.email };
+			}
+		});
 	});
 
 	export let showModal: boolean;
 	let accountCopy: AccountUpdate | null;
 
-	const dispatch = createEventDispatcher<{ notification: { message: string } }>();
+	const dispatch = createEventDispatcher<{
+		notification: { message?: string; errorMessage?: string };
+	}>();
 
 	async function submitHandler() {
 		if (accountCopy == null) return;
+
+		if (accountCopy.email) {
+			const errorMessage = validateEmail(accountCopy.email);
+			if (errorMessage) {
+				dispatch('notification', { errorMessage });
+				return;
+			}
+		}
+
+		if (accountCopy.password) {
+			const errorMessage = validatePassword(accountCopy.password);
+			if (errorMessage) {
+				dispatch('notification', { errorMessage });
+				return;
+			}
+		}
 
 		// compare original and copy
 		const isSame = checkAccountChange(accountCopy);
@@ -30,13 +52,18 @@
 			return;
 		}
 
-		updateUser(accountCopy).then((updatedAccount) => {
-			authStore.set(updatedAccount);
-			dispatch('notification', {
-				message: 'Profile successfully updated'
+		await updateUser(accountCopy)
+			.then((updatedAccount) => {
+				authStore.set(updatedAccount);
+				dispatch('notification', {
+					message: 'Profile successfully updated'
+				});
+				showModal = false;
+			})
+			.catch((e) => {
+				dispatch('notification', { errorMessage: String(e) });
+				showModal = false;
 			});
-			showModal = false;
-		});
 	}
 </script>
 

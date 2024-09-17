@@ -1,4 +1,4 @@
-import { compare, hash } from "bcrypt";
+import { compare, hash } from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { AccountPayload } from "../../model/index";
 
@@ -45,7 +45,7 @@ export const verifyToken = (
   return null;
 };
 
-export const hashPassword = async (password: string, saltRound: number) =>
+export const hashPassword = async (password: string, saltRound = 10) =>
   hash(password, saltRound);
 
 export const compareHash = async (

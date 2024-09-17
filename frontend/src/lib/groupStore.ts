@@ -11,9 +11,7 @@ const _groupStore = () => {
 				store.set(groups);
 			});
 		},
-		getGroups: (): string[] => {
-			return get(store);
-		}
+		getGroups: (): string[] => get(store)
 	};
 };
 

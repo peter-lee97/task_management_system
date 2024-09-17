@@ -6,14 +6,12 @@
 	import '../app.css';
 	import type { Account, UserGroup } from '../model';
 	import UserGroupsEntry from './UserGroupsEntry.svelte';
-	import { removeFromGroup } from '../services/api/user_group';
 	import EditIcon from './icons/EditIcon.svelte';
 	import type { AccountUpdate } from '../model/account';
+	import { writable } from 'svelte/store';
 
 	export let account: Account;
-	export let userGroups: UserGroup[] | null;
-
-	onMount(() => {});
+	export let currentGroups: UserGroup[] | undefined;
 
 	$: {
 		if (!isEditProfile) resetEntries();
@@ -22,15 +20,24 @@
 	let isEditProfile: boolean = false;
 
 	// possible new changes
-	let newEmail: string | undefined;
+	let newEmail: string | null;
 	let newGroup: string | null;
 	let newPassword: string | null;
 	let newStatus: string = account.accountStatus;
 
+	let currentGroupCopy = writable<string[]>();
+
+	$: {
+		if (currentGroups != null) {
+			currentGroupCopy.set(currentGroups.map((v) => v.user_group));
+		}
+	}
+
 	const eventDispatcher = createEventDispatcher<{
 		submit: {
 			newAccount?: AccountUpdate;
-			newGroup?: string | null;
+			newGroups?: string[];
+			removeGroups?: string[];
 		};
 		notification: { message?: string; errorMessage?: string };
 	}>();
@@ -38,7 +45,8 @@
 	function submitHandler() {
 		const payload: {
 			newAccount?: AccountUpdate;
-			newGroup?: string | null;
+			newGroups?: string[];
+			removeGroups?: string[];
 		} = {};
 
 		if (newPassword) {
@@ -57,16 +65,22 @@
 			}
 		}
 
-		if (userGroups != null && newGroup) {
-			const groupExists = userGroups.map((g) => g.user_group).includes(newGroup);
-			if (!groupExists) payload['newGroup'] = newGroup;
-		}
+		const originalGroupSet = new Set(
+			currentGroups != null ? currentGroups?.map((v) => v.user_group) : []
+		);
+		const copyGroupSet = new Set($currentGroupCopy);
+
+		const toRemove = Array.from(originalGroupSet.values()).filter((e) => !copyGroupSet.has(e));
+		const toAdd = Array.from(copyGroupSet.values()).filter((e) => !originalGroupSet.has(e));
+
+		if (toRemove.length > 0) payload.removeGroups = toRemove;
+		if (toAdd.length > 0) payload.newGroups = toAdd;
 
 		const called = eventDispatcher('submit', {
 			...payload,
 			newAccount: {
 				username: account.username,
-				...(newEmail != null ? { email: newEmail } : undefined),
+				...(newEmail ? { email: newEmail } : undefined),
 				...(newPassword != null ? { password: newPassword } : undefined),
 				...(account.accountStatus != newStatus ? { accountStatus: newStatus } : undefined)
 			}
@@ -76,10 +90,10 @@
 	}
 
 	function resetEntries() {
-		newEmail = account.email ?? undefined;
-		newGroup = null;
+		newEmail = null;
 		newPassword = null;
 		newStatus = account.accountStatus;
+		currentGroupCopy.set(currentGroups ? currentGroups!.map((e) => e.user_group) : []);
 	}
 
 	function toggleEdit() {
@@ -98,26 +112,39 @@
 	</td>
 	<td id="groups-row-entry" align="center">
 		{#if isEditProfile}
-			<select bind:value={newGroup} name="Groups">
+			<select
+				bind:value={newGroup}
+				name="Groups"
+				on:change={(_) => {
+					if (newGroup != null) {
+						currentGroupCopy.update((store) => {
+							if (!store.includes(String(newGroup))) {
+								store.push(String(newGroup));
+							}
+							return [...store];
+						});
+						newGroup = null;
+					}
+				}}
+			>
 				<option selected value="null" placeholder="none" />
-				{#each Object.entries(groupStore.getGroups()) as [_, entry]}
-					<option value={entry}>{entry}</option>
+				{#each Object.entries($groupStore) as [_, entry]}
+					<option value={entry}>{entry} </option>
 				{/each}
 			</select>
 			<br />
 		{/if}
-		{#if userGroups != null}
-			<UserGroupsEntry
-				bind:groups={userGroups}
-				on:select_group={(value) => {
-					removeFromGroup(value.detail.username, value.detail.user_group).then(() => {
-						eventDispatcher('notification', {
-							message: `${value.detail.user_group} removed successfully`
-						});
-					});
-				}}
-			/>
-		{/if}
+
+		<UserGroupsEntry
+			bind:groups={$currentGroupCopy}
+			bind:canEdit={isEditProfile}
+			on:select_group={(event) => {
+				const groupname = event.detail;
+				currentGroupCopy.update((v) => {
+					return [...v.filter((v) => v != groupname)];
+				});
+			}}
+		/>
 	</td>
 	<td id="password-row-entry">
 		{#if !isEditProfile}

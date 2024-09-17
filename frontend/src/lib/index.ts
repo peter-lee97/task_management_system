@@ -12,4 +12,4 @@ export const baseAPI = axios.create({
 
 export const allStatus = ['active', 'disabled'];
 
-export const unexpectedError = 'An error occured, please contact your admin';
+export const unexpectedErrorMsg = 'An error occured, please contact your admin';

@@ -30,10 +30,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@fortawesome/free-solid-svg-icons": "^6.6.0",
 		"axios": "^1.7.7",
-		"jwt-decode": "^4.0.0",
-		"svelte-fa": "^4.0.2",
 		"svelte-sonner": "^0.3.27"
 	}
 }

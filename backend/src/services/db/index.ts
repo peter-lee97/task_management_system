@@ -13,7 +13,7 @@ const createConnection = async ({
   database: string;
 }): Promise<void> => {
   try {
-    connection = await mysql.createConnection({
+    connection = mysql.createPool({
       host,
       user: username,
       password,

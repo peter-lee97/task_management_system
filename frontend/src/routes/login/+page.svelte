@@ -5,6 +5,7 @@
 	import { authStore, validateAccount } from '$lib/authStore';
 	import '../../app.css';
 	import { login } from '../../services/api/auth';
+	import { Toaster, toast } from 'svelte-sonner';
 
 	let username: string | undefined;
 	let password: string | undefined;
@@ -51,6 +52,7 @@
 				errorMessage = 'An unexpected error occured';
 			}
 		}
+		if (errorMessage) toast.error(errorMessage);
 	}
 </script>
 
@@ -62,30 +64,33 @@
 			<br />
 			<input type="password" bind:value={password} placeholder="Password" />
 			<input type="submit" value="Login" disabled={!showButton} />
-			{#if errorMessage}
+			<!-- {#if errorMessage}
 				<div class="error-message" style="color:red">{errorMessage}</div>
-			{/if}
+			{/if} -->
 		</form>
 	</div>
+	<Toaster />
 </body>
 
 <style>
+	input[type='password'],
+	input[type='text'] {
+		background-color: #c9c9c9;
+	}
 	body {
 		margin: 0;
 		height: 100vh;
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		background-color: #f4f4f4; /* Optional background color for the page */
+		background-color: white;
 	}
 
 	.login-div {
 		width: 300px; /* Set a fixed width for the login form */
 		text-align: center;
 		background-color: white;
-		padding: 24px;
 		border-radius: 8px;
-		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional shadow for visual effect */
 	}
 
 	.login-title {
@@ -93,12 +98,5 @@
 		font-size: 32px;
 		text-align: center;
 		margin-bottom: 16px; /* Spacing between title and inputs */
-	}
-
-	/* Error message styling */
-	.error-message {
-		color: red;
-		margin-top: 12px;
-		font-size: 14px;
 	}
 </style>

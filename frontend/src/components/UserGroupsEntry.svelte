@@ -3,23 +3,25 @@
 	import type { UserGroup } from '../model';
 	import CustomTag from './CustomTag.svelte';
 
-	const dispatch = createEventDispatcher<{ select_group: UserGroup }>();
+	const dispatch = createEventDispatcher<{ select_group: string }>();
 
-	function onClickHandler(selectedGroup: UserGroup) {
+	function onClickHandler(selectedGroup: string) {
 		dispatch('select_group', selectedGroup);
 	}
 
-	export let groups: UserGroup[];
+	export let groups: Iterable<string>;
+	export let canEdit: boolean;
 </script>
 
 <div class="group-list">
 	{#each Object.entries(groups) as [_, group]}
 		<div class="group-item">
 			<CustomTag
-				on:click={(value) => {
+				enable={canEdit}
+				on:click={(_s) => {
 					onClickHandler(group);
 				}}
-				value={group.user_group}
+				value={group}
 			/>
 		</div>
 	{/each}

@@ -1,28 +1,31 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import type { Account } from '../../model';
-	import { validateEmail, validatePassword } from '$lib/validate';
+	import { validateEmail, validatePassword, validateUsername } from '$lib/validate';
 	import { allStatus } from '$lib';
+	import UserGroupsEntry from '../../components/UserGroupsEntry.svelte';
 
 	export let groups: string[];
 
 	const dispatch = createEventDispatcher<{
-		click: { newAccount: Account; newGroup?: string };
+		click: { newAccount: Account; newGroups?: string[] };
+		notification: { message?: string; errorMessage?: string };
 	}>();
 
 	let username: string;
 	let password: string;
 	let accountStatus = allStatus[0];
 	let email: string | null;
-	let newGroup: string | undefined;
+	let selectedGroup: string | null;
+	let newGroups: string[] = [];
 
 	const onTapHandler = () => {
 		const invalidMsg = validateEntry();
 		if (invalidMsg) {
-			alert(invalidMsg);
+			dispatch('notification', { errorMessage: invalidMsg! });
 			return;
 		}
-		const payload: { newAccount: Account; newGroup?: string } = {
+		const payload: { newAccount: Account; newGroups?: string[] } = {
 			newAccount: {
 				accountStatus,
 				password,
@@ -30,22 +33,24 @@
 				...(email != null ? { email } : null)
 			}
 		};
-		console.log(`newgroup: ${newGroup}`);
-		if (newGroup) payload['newGroup'] = newGroup;
+		console.log(`newgroup: ${newGroups}`);
+		if (newGroups.length > 0) payload['newGroups'] = newGroups;
 
 		dispatch('click', payload);
 		clearEntry();
 	};
 
-	const clearEntry = () => {
+	export const clearEntry = () => {
 		username = '';
 		password = '';
 		email = '';
-		newGroup = undefined;
+		newGroups = [];
 	};
 
-	const validateEntry = (): String | null => {
+	const validateEntry = (): string | null => {
 		if (!username) return 'Username cannot be empty';
+		const invalidUserMsg = validateUsername(username);
+		if (invalidUserMsg) return invalidUserMsg;
 		const invalidPasswordMsg = validatePassword(password);
 		if (invalidPasswordMsg) return invalidPasswordMsg;
 
@@ -71,12 +76,32 @@
 		/>
 	</td>
 	<td>
-		<select bind:value={newGroup} name="Groups" class="create-user-form">
+		<select
+			bind:value={selectedGroup}
+			name="Groups"
+			class="create-user-form"
+			on:change={(_) => {
+				if (selectedGroup == null) return;
+				newGroups.push(selectedGroup);
+				const set = new Set(newGroups);
+				newGroups = Array.from(set.values());
+				selectedGroup = null;
+			}}
+		>
 			<option selected value={undefined}></option>
 			{#each Object.entries(groups) as [_, group]}
 				<option value={group}>{group}</option>
 			{/each}
 		</select>
+		{#if newGroups.length > 0}
+			<UserGroupsEntry
+				canEdit={true}
+				bind:groups={newGroups}
+				on:select_group={(e) => {
+					newGroups = [...newGroups.filter((v) => v != e.detail)];
+				}}
+			></UserGroupsEntry>
+		{/if}
 	</td>
 	<td>
 		<input bind:value={password} type="password" class="create-user-form" />

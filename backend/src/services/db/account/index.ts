@@ -36,6 +36,7 @@ export const createUser = async (
     const [inserted] = await db.execute<ResultSetHeader>(sql, values);
     if (inserted.affectedRows == 0) return null;
   } catch (error) {
+    console.error(error);
     throw error;
   }
   return fetchUser(db, account.username);

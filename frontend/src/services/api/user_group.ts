@@ -1,4 +1,5 @@
-import { baseAPI } from '$lib';
+import { baseAPI, unexpectedErrorMsg } from '$lib';
+import { logoutAccount } from '$lib/authStore';
 import { AxiosError } from 'axios';
 import type { UserGroup } from '../../model';
 
@@ -10,11 +11,15 @@ export const fetchUserGroups = async (username: string): Promise<UserGroup[]> =>
 		return response.data['result'] as UserGroup[];
 	} catch (error) {
 		if (error instanceof AxiosError) {
-			console.error(error.message);
+			if (error.status == 401) {
+				logoutAccount();
+			} else {
+				console.log(error.response?.data.message);
+				throw error.response!.data['message'];
+			}
 		}
-		console.error('failed to fetch user user_groups');
+		throw unexpectedErrorMsg;
 	}
-	return [];
 };
 
 export const fetchGroups = async (): Promise<string[]> => {
@@ -25,12 +30,15 @@ export const fetchGroups = async (): Promise<string[]> => {
 		return response.data['result'];
 	} catch (error) {
 		if (error instanceof AxiosError) {
-			console.error(error.message);
+			if (error.status == 401) {
+				logoutAccount();
+			} else {
+				console.log(error.response?.data.message);
+				throw error.response!.data['message'];
+			}
 		}
-		console.error('failed to fetch group names');
+		throw unexpectedErrorMsg;
 	}
-
-	return [];
 };
 
 export const addGroup = async (usergroup: string, username?: string): Promise<UserGroup | null> => {
@@ -46,15 +54,19 @@ export const addGroup = async (usergroup: string, username?: string): Promise<Us
 		}
 	} catch (error) {
 		if (error instanceof AxiosError) {
-			console.error(error.response?.data.message);
-			console.error(error.message);
-			throw error.response?.data.message;
+			if (error.status == 401) {
+				logoutAccount();
+			} else {
+				console.log(error.response?.data.message);
+				throw error.response!.data['message'];
+			}
 		}
+		throw unexpectedErrorMsg;
 	}
 	return null;
 };
 
-export const removeFromGroup = async (username: string, usergroup: string) => {
+export const removeFromGroup = async (usergroup: string, username: string) => {
 	console.log('[removeFromGroup]');
 	try {
 		await baseAPI.delete('/user_group/remove', {
@@ -64,9 +76,14 @@ export const removeFromGroup = async (username: string, usergroup: string) => {
 			}
 		});
 	} catch (error) {
-		console.error(error);
 		if (error instanceof AxiosError) {
-			throw error.message;
+			if (error.status == 401) {
+				logoutAccount();
+			} else {
+				console.log(error.response?.data.message);
+				throw error.response!.data['message'];
+			}
 		}
+		throw unexpectedErrorMsg;
 	}
 };

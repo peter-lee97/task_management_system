@@ -5,13 +5,24 @@
 	import { isAdminReadable, validateAccount } from '$lib/authStore';
 	import type { Account, UserGroup } from '../../model';
 	import { fetchAllUsers, register, updateUser } from '../../services/api/auth';
-	import { addGroup, fetchUserGroups } from '../../services/api/user_group';
+	import { addGroup, fetchUserGroups, removeFromGroup } from '../../services/api/user_group';
 	import Modal from '../../components/Modal.svelte';
 	import UserRowEntry from '../../components/UserRowEntry.svelte';
 	import AddUserEntry from './AddUserEntry.svelte';
 	import NavBar from '../../components/NavBar.svelte';
 	import ManagementBanner from '../../components/ManagementBanner.svelte';
 	import AddGroupEntry from './AddGroupEntry.svelte';
+	import { writable } from 'svelte/store';
+	import { AxiosError } from 'axios';
+	import { error } from '@sveltejs/kit';
+	import { validateGroup } from '$lib/validate';
+
+	let userAccounts: Record<string, Account> = {};
+	let userGroups = writable<Record<string, UserGroup[]>>();
+	let newGroupName: string | null;
+
+	let showCreateGroup = false;
+	let isLoaded = false;
 
 	onMount(async () => {
 		console.log(`onMount userManagement`);
@@ -20,19 +31,27 @@
 		if ($isAdminReadable) {
 			const accounts = await fetchAllUsers();
 			groupStore.fetch();
+			const setup: Record<string, UserGroup[]> = {};
 			accounts.forEach((acc) => {
 				userAccounts[acc.username] = acc;
-				fetchUserGroups(acc.username).then((groups) => {
-					userGroups[acc.username] = groups;
-				});
+				setup[acc.username] = [];
 			});
-		}
-	});
-	let userAccounts: Record<string, Account> = {};
-	let userGroups: Record<string, UserGroup[]> = {};
-	let newGroupName: string | null;
 
-	let showCreateGroup = false;
+			userGroups.set(setup);
+			accounts
+				.map((a) => a.username)
+				.forEach((username) => {
+					fetchUserGroups(username).then((groups) => {
+						userGroups.update((v) => {
+							v[username] = groups;
+							return { ...v };
+						});
+					});
+				});
+		}
+
+		isLoaded = true;
+	});
 
 	function toggleShowGroup() {
 		showCreateGroup = !showCreateGroup;
@@ -41,7 +60,11 @@
 
 	async function submitGroup() {
 		if (newGroupName == null) return;
-		console.log(`new group name: ${newGroupName}`);
+		const invalidGroupMessage = validateGroup(newGroupName);
+		if (invalidGroupMessage) {
+			toast.error(invalidGroupMessage);
+			return;
+		}
 		await addGroup(newGroupName)
 			.then((value) => {
 				toast.success(`${value?.user_group} group added`);
@@ -79,23 +102,35 @@
 			{#if groupStore.getGroups()}
 				<AddUserEntry
 					groups={$groupStore}
+					on:notification={(event) => {
+						if (event.detail.errorMessage) {
+							toast.error(event.detail.errorMessage);
+						} else if (event.detail.message) {
+							toast.message(event.detail.message);
+						}
+					}}
 					on:click={async (event) => {
 						const newAccount = event.detail.newAccount;
-						const newGroup = event.detail.newGroup;
-						console.log(JSON.stringify(event.detail));
+						const newGroups = event.detail.newGroups;
 						try {
-							const addedAccount = await register(newAccount);
+							let addedAccount = await register(newAccount);
 							if (!addedAccount) return;
 							userAccounts[addedAccount.username] = addedAccount;
-							if (!newGroup) return;
-							addGroup(newGroup, addedAccount.username).then(async (value) => {
-								if (!value) return;
-								userGroups[addedAccount.username] = await fetchUserGroups(addedAccount.username);
+							if (!newGroups) return;
+							newGroups.forEach((e) => {
+								addGroup(e, addedAccount.username)
+									.then(async (value) => {
+										if (!value) return;
+										const addedGroups = await fetchUserGroups(addedAccount.username);
+										userGroups.update((v) => {
+											v[addedAccount.username] = addedGroups;
+											return { ...v };
+										});
+									})
+									.catch((e) => toast.error(String(e)));
 							});
 						} catch (error) {
-							if (error instanceof Error) {
-								alert(error.message);
-							}
+							toast.error(String(error));
 						}
 					}}
 				/>
@@ -103,7 +138,7 @@
 			{#each Object.entries(userAccounts) as [username, _]}
 				<UserRowEntry
 					bind:account={userAccounts[username]}
-					bind:userGroups={userGroups[username]}
+					bind:currentGroups={$userGroups[username]}
 					on:notification={(event) => {
 						fetchUserGroups(username).then((groups) => {
 							userGroups = { ...userGroups, [username]: groups };
@@ -112,26 +147,38 @@
 						});
 					}}
 					on:submit={async (event) => {
-						const newGroup = event.detail.newGroup;
+						const addGroups = event.detail.newGroups;
+						const removeGroups = event.detail.removeGroups;
 						const newAccount = event.detail.newAccount;
 
 						if (newAccount != null && Object.keys(newAccount).length > 1) {
-							console.log(`Updating row: ${JSON.stringify(newAccount)}`);
-							updateUser(newAccount).then((updatedAccount) => {
-								console.log(`returned from Server: ${JSON.stringify(updatedAccount)}`);
-								userAccounts = { ...userAccounts, [username]: updatedAccount };
-								toast(`account ${newAccount.username} updated`);
-							});
+							await updateUser(newAccount)
+								.then((updatedAccount) => {
+									if (updatedAccount == null) return;
+									userAccounts = { ...userAccounts, [username]: updatedAccount };
+									toast.success(`account ${newAccount.username} updated`);
+									console.log(`row updated: ${JSON.stringify(updatedAccount)}`);
+								})
+								.catch((e) => toast.error(e));
 						}
-						if (newGroup) {
-							addGroup(newGroup, userAccounts[username].username).then(async (value) => {
-								if (value == null) return;
-								fetchUserGroups(username).then((groups) => {
-									userGroups = { ...userGroups, [username]: groups };
-									toast(`${value.user_group} added to ${value.username}`);
+
+						if (addGroups) {
+							await Promise.all(addGroups.map((e) => addGroup(e, username)));
+						}
+						if (removeGroups) {
+							await Promise.all(removeGroups.map((g) => removeFromGroup(g, username)));
+						}
+						fetchUserGroups(username)
+							.then((groups) => {
+								console.log(`[groups] from server: ${JSON.stringify(groups)} | ${username}`);
+								userGroups.update((v) => {
+									v[username] = groups;
+									return { ...v };
 								});
+							})
+							.catch((e) => {
+								toast.error(e);
 							});
-						}
 					}}
 				/>
 			{/each}
@@ -143,7 +190,7 @@
 	table {
 		margin-left: auto;
 		margin-right: auto;
-		width: 80%;
+		width: 90%;
 		border-collapse: collapse;
 	}
 	thead {

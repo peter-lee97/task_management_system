@@ -1,4 +1,5 @@
 import { Connection, ResultSetHeader } from "mysql2/promise";
+import { getDb } from "..";
 import { UserGroup } from "../../../model";
 
 // Search user group by username
@@ -69,7 +70,9 @@ export const addToGroup = async (
   try {
     const [result] = await db.execute<ResultSetHeader>(sql, values);
     console.log(
-      `new entry ${result.affectedRows} in user group: ${username}|${usergroup}`
+      `new entry ${JSON.stringify(
+        result.affectedRows
+      )} in user group: ${username} | ${usergroup}`
     );
   } catch (error) {
     throw error;
@@ -92,11 +95,32 @@ export const removeFromGroup = async (
   }
 };
 
-export const Checkgroup = async (
+export const isUserAdmin = async (
   db: Connection,
+  username: string
+): Promise<boolean> => {
+  const sql = `
+  SELECT exists(
+	  SELECT 1 from UserGroup WHERE username = ? AND user_group LIKE ? LIMIT 1
+  );
+  `;
+  const values = [username, "%admin%"];
+  try {
+    const [result] = await db.query<UserGroup[]>(sql, values);
+    if (result.length == 0) return false;
+    if (Object.values(result[0])[0] == 1) return true;
+  } catch (error) {
+    throw error;
+  }
+
+  return false;
+};
+
+export const Checkgroup = async (
   username: string,
   groupname: string
 ): Promise<boolean> => {
+  const db = getDb();
   const sql =
     "SELECT * FROM UserGroup WHERE username = ? AND user_group = ? ORDER BY username, user_group";
   const values = [username, groupname];

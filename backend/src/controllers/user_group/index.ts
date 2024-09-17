@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { getDb, UserGroupDB } from "../../services/db";
 import {
   addToGroup,
@@ -8,11 +8,7 @@ import {
 } from "../../services/db/user_group";
 
 // Use fetch all usergroup rows with username
-export const fetchUserGroups = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const fetchUserGroups = async (req: Request, res: Response) => {
   const db = getDb();
   const { username } = req.query;
   if (!username) {
@@ -58,12 +54,14 @@ export const removeUserFromGroup = async (req: Request, res: Response) => {
   const username = req.query["username"] as string;
   const usergroup = req.query["usergroup"] as string;
 
+  // const { usergroups } = req.body;
+
   if (!username || !usergroup) {
     res.status(400).send({ message: "username and usergroup fields required" });
     return;
   }
   const db = getDb();
-  const inGroup = await Checkgroup(db, username, usergroup);
+  const inGroup = await Checkgroup(username, usergroup);
   if (!inGroup) {
     return res.status(200).send({ message: "successfully updated" });
   }
@@ -83,23 +81,24 @@ export const removeUserFromGroup = async (req: Request, res: Response) => {
 
 export const addUserToGroup = async (req: Request, res: Response) => {
   const db = getDb();
-  const { username, usergroup } = req.body;
+  let { username, usergroup } = req.body;
+  if (!username) username = "";
   if (!usergroup) {
-    res.status(400).send({ message: "UserGroup field cannot be empty" });
+    res.status(400).send({ message: "user group field is required" });
     return;
   }
 
   try {
-    const inGroup = await Checkgroup(db, username, usergroup);
+    const inGroup = await Checkgroup(username, usergroup);
+    console.log(`is group exists: ${inGroup} | ${username} | ${usergroup}`);
 
     if (inGroup) {
-      res.status(400).send({ message: "entry already exists" }).end();
+      res.status(400).send({ message: "Entry already exists" });
       return;
     }
 
     await addToGroup(db, username, usergroup);
     const group = await fetchByGroupAndUsername(db, username, usergroup);
-    console.log(`group added: ${JSON.stringify(group)}`);
     res.status(200).send({ message: "success", result: group });
   } catch (error) {
     if (error instanceof Error) {

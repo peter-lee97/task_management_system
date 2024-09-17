@@ -14,10 +14,8 @@
 
 	const sub = authStore.subscribe((acc) => {
 		console.log(`changes in account: ${acc != null}`);
-		if (acc == null) {
-			if (browser) {
-				goto('/login');
-			}
+		if (acc == null && browser) {
+			goto('/login');
 		}
 	});
 
@@ -78,7 +76,12 @@
 <EditProfileModal
 	bind:showModal={showProfile}
 	on:notification={(event) => {
-		toast(event.detail.message);
+		if (event.detail.message) {
+			toast.info(event.detail.message);
+		} else if (event.detail.errorMessage) {
+			console.error(`error from edit profile: ${event.detail.errorMessage}`);
+			toast.error(event.detail.errorMessage);
+		}
 	}}
 />
 

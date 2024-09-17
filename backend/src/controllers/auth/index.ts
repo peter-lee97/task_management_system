@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 
 import { Account } from "../../model";
-import { AccountDB, getDb, UserGroupDB } from "../../services/db";
+import { AccountDB, getDb } from "../../services/db";
+import { Checkgroup } from "../../services/db/user_group";
 import { compareHash, generateToken, hashPassword } from "../../services/jwt";
 
 export async function login(req: Request, res: Response): Promise<void> {
@@ -18,6 +19,7 @@ export async function login(req: Request, res: Response): Promise<void> {
 
   try {
     const account = await AccountDB.fetchUser(db, username);
+
     if (!account) {
       console.log("cannot find account");
       res.status(400).json({ message: "Invalid credentials" });
@@ -25,37 +27,17 @@ export async function login(req: Request, res: Response): Promise<void> {
     }
 
     if (account.accountStatus !== "active") {
-      res
-        .status(401)
-        .json({ message: "Not authorized to access route, account disabled" });
+      res.status(401).json({ message: "Invalid credentials" });
       return;
     }
 
-    let isAdmin = await UserGroupDB.Checkgroup(db, account.username, "ADMIN");
-    // Check if user is from other admin group
-    if (!isAdmin) {
-      const groups = await UserGroupDB.fetchByUsername(db, account.username);
-      const filter = groups.filter((value) =>
-        value.user_group.toLowerCase().includes("admin")
-      );
-      isAdmin = filter.length > 0;
-    }
+    const isAdmin = await Checkgroup(account.username, "ADMIN");
 
-    if (username === "admin") {
-      console.log("checking for root admin");
-      if (password !== account.password) {
-        res.status(400).send({ message: "Invalid Credentials" });
-      }
-    }
-    if (
-      username !== "admin" &&
-      !(await compareHash(password, account.password))
-    ) {
-      res.status(400).send({ message: "Invalid Credentials" });
+    if (!(await compareHash(password, account.password))) {
+      res.status(400).send({ message: "Invalid credentials" });
       return;
     }
 
-    // const hashPW = await hashPassword(password, 2);
     const ipAddress = req.socket.remoteAddress;
     const userAgent = req.get("User-Agent") ?? "NOT_FOUND";
     const jwtPayload = {
@@ -76,7 +58,7 @@ export async function login(req: Request, res: Response): Promise<void> {
         maxAge: 1000 * 60 * 60 * 5, // 5 hours for now
       })
       .status(200)
-      .json({ message: "success", result: account, jwt: token });
+      .json({ message: "success", result: account });
     return;
   } catch (error) {
     console.error(`failed to query for login: ${error}`);
@@ -107,10 +89,15 @@ export const register = async (
 
   const db = getDb();
 
+  const result = await AccountDB.fetchUser(db, username);
+  if (result != null) {
+    return res.status(400).json({ message: "username already exists" });
+  }
+
   try {
     const templateAccount = {
       accountStatus: accountStatus ?? "active",
-      password: await hashPassword(password, 2),
+      password: await hashPassword(password),
       username: username as string,
       ...(email ? { email } : null),
     } as Account;
@@ -118,7 +105,9 @@ export const register = async (
     const newAccount = await AccountDB.createUser(db, templateAccount);
 
     if (!newAccount) {
-      res.status(400).send({ message: "Failed to create an account" });
+      res.status(400).send({
+        message: "failed to create an account. please contact your admin",
+      });
       return;
     }
 
@@ -128,7 +117,9 @@ export const register = async (
     });
   } catch (error) {
     console.error(`failed to query for login: ${error}`);
-    res.status(400).send({ message: "Failed to create an account" });
+    res
+      .status(500)
+      .send({ message: "failed to create an account. please contact dev" });
   }
 };
 
@@ -162,26 +153,29 @@ export const updateCredentials = async (
   }
 
   const db = getDb();
-  const fetchAccount = await AccountDB.fetchUser(db, username);
+  const accountFromDb = await AccountDB.fetchUser(db, username);
 
-  if (fetchAccount == null) {
+  if (accountFromDb == null) {
     res.status(400).json({
       message: "Account not found",
     });
     return;
   }
-  const copyAccount = Object.assign({}, fetchAccount);
+
+  const copyAccount = Object.assign({}, accountFromDb);
 
   if (password) {
-    const isSame = await compareHash(password, fetchAccount.password);
+    const isSame = await compareHash(password, accountFromDb.password);
     if (!isSame) {
-      copyAccount.password = await hashPassword(password, 2);
+      copyAccount.password = await hashPassword(password);
       console.log(`hash password: ${copyAccount["password"]}`);
     }
   }
 
   if (email != null) copyAccount.email = email;
-  if (accountStatus != null) copyAccount.accountStatus = accountStatus;
+  if (accountStatus != null && username !== "admin") {
+    copyAccount.accountStatus = accountStatus;
+  }
 
   try {
     const updatedAccount = await AccountDB.updateUser(db, copyAccount);

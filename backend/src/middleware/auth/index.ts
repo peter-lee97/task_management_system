@@ -1,8 +1,18 @@
 import { NextFunction, Request, Response } from "express";
 import assert from "node:assert";
 import { AccountDB, getDb } from "../../services/db";
-import { verifyToken } from "../../services/jwt";
+import { Checkgroup } from "../../services/db/user_group";
+import { generateToken, verifyToken } from "../../services/jwt";
 
+/**
+ * Validate via cookie.
+ * 1. Check Token validity
+ * 2. Check `accountStatus` is active
+ * @param req
+ * @param res
+ * @param next
+ * @returns
+ */
 export const validateCookie = async (
   req: Request,
   res: Response,
@@ -34,16 +44,47 @@ export const validateCookie = async (
       account!.username === payload.username,
       "account and payload username should be the same"
     );
-    req.accountPayload = { ...payload };
+
+    // check if user is active state
+    if (account.accountStatus !== "active") {
+      console.log("account status is disabled, cannot continue");
+      res.status(401).json({
+        message: "Not authorized to access",
+      });
+      return;
+    }
+    const isAdmin = await Checkgroup(account.username, "ADMIN");
+
+    if (payload.isAdmin != isAdmin) {
+      console.log("Refresh token");
+      const newPayload = { ...payload, isAdmin };
+      generateToken({
+        secret: process.env.ENV_SECRET as string,
+        jwtPayload: newPayload,
+        expiresIn: process.env.EXPIRES_IN ?? "1d",
+      });
+      req.accountPayload = newPayload;
+      res.cookie("token", token, {
+        httpOnly: true,
+        maxAge: 1000 * 60 * 60 * 5, // 5 hours for now
+      });
+    } else {
+      req.accountPayload = { ...payload };
+    }
+
     next();
   } catch (error) {
-    return next(error);
+    console.error(`failed to validate cookie: ${error}`);
+    res
+      .status(500)
+      .json({ message: "failed to authenticated. please contact your admin" });
   }
 };
 
 /**
- * `validateToken` must be called before this middleware
- * check `isAdmin` from payload
+ * `validateCookie()` must be called before calling this
+ *
+ * req.accountPayload must exists
  * @param req
  * @param res
  * @param next
@@ -53,26 +94,18 @@ export const adminOnly = (
   res: Response,
   next: NextFunction
 ): void => {
-  if (!req.accountPayload) throw "Unhandled error. token is invalid";
+  assert(
+    req.accountPayload,
+    "accountPayload must be exists, check if validateCookie is called first"
+  );
+  if (!req.accountPayload) {
+    res.status(401).json({ message: "Not authorized to access" });
+    return;
+  }
   const accountPayload = req.accountPayload!;
 
   accountPayload.isAdmin
     ? next()
-    : res.status(401).json({ message: "Not authorized to access route" });
-};
-
-export const validateActive = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  const account = req.accountPayload;
-  const db = getDb();
-  const fetchAccount = await AccountDB.fetchUser(db, account!.username);
-  if (fetchAccount?.accountStatus.toLowerCase() === "active") {
-    next();
-    return;
-  }
-  console.log(`user is disabled`);
-  res.status(404).send({ message: "Not authorized to access route" });
+    : res.status(401).json({ message: "Not authorized to access" });
+  return;
 };

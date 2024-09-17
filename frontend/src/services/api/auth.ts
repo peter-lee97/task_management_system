@@ -1,4 +1,6 @@
-import { baseAPI, unexpectedError } from '$lib';
+import { goto } from '$app/navigation';
+import { baseAPI, unexpectedErrorMsg } from '$lib';
+import { logoutAccount } from '$lib/authStore';
 import { AxiosError } from 'axios';
 import type { Account } from '../../model';
 import type { AccountUpdate } from '../../model/account';
@@ -23,9 +25,14 @@ export const register = async (account: Account): Promise<Account | null> => {
 		return response.data['result'];
 	} catch (error) {
 		if (error instanceof AxiosError) {
-			throw error.response!.data['message'];
+			if (error.status == 401) {
+				logoutAccount();
+			} else {
+				console.log(error.response?.data.message);
+				throw error.response!.data['message'];
+			}
 		}
-		throw unexpectedError;
+		throw unexpectedErrorMsg;
 	}
 };
 
@@ -35,6 +42,7 @@ export const logout = () => {
 		baseAPI.post('/auth/logout');
 	} catch (error) {
 		console.error(`failed to logout: ${error}`);
+		goto('/login');
 	}
 };
 
@@ -47,14 +55,17 @@ export const fetchUser = async (username?: string): Promise<Account | null> => {
 				username
 			}
 		});
-
-		// if (response.status != 200) return null;
-		return response.data['result'] as Account | null;
+		return response.data['result'];
 	} catch (error) {
 		if (error instanceof AxiosError) {
-			console.log(error.message);
+			if (error.status == 401) {
+				logoutAccount();
+			} else {
+				console.log(error.response?.data.message);
+				throw error.response!.data['message'];
+			}
 		}
-		throw error;
+		throw unexpectedErrorMsg;
 	}
 };
 
@@ -69,31 +80,52 @@ export const validateUser = async (): Promise<[Account | null, boolean]> => {
 		return [null, false];
 	} catch (error) {
 		if (error instanceof AxiosError) {
-			console.log(error.message);
+			if (error.status == 401) {
+				logoutAccount();
+			} else {
+				console.log(error.response?.data.message);
+				throw error.response!.data['message'];
+			}
 		}
-		return [null, false];
+		throw unexpectedErrorMsg;
 	}
 };
 
 export const fetchAllUsers = async (): Promise<Account[]> => {
 	console.log('[fetchAllUsers]');
-	const response = await baseAPI.get('/auth/users');
-	if (response.status != 200) return [];
-	return response.data['result'];
+	try {
+		const response = await baseAPI.get('/auth/users');
+		if (response.status != 200) return [];
+		return response.data['result'];
+	} catch (error) {
+		if (error instanceof AxiosError) {
+			if (error.status == 401) {
+				logoutAccount();
+			} else {
+				console.log(error.response?.data.message);
+				throw error.response!.data['message'];
+			}
+		}
+		throw unexpectedErrorMsg;
+	}
 };
 
-export const updateUser = async (account: AccountUpdate): Promise<Account> => {
+export const updateUser = async (account: AccountUpdate): Promise<Account | null> => {
 	try {
 		const response = await baseAPI.put('/auth/update', account, {
 			params: { username: account.username }
 		});
-		if (response.status != 200) throw 'failed to update user';
+
+		if (response.status != 200) return null;
 		return response.data['result'];
 	} catch (error) {
-		if (!(error instanceof AxiosError)) {
-			throw 'unable to update user';
+		if (error instanceof AxiosError) {
+			if (error.status == 401) {
+				logoutAccount();
+			}
+			throw error.response!.data['message'];
+		} else {
+			throw unexpectedErrorMsg;
 		}
-		console.error(error.message);
-		throw error.message;
 	}
 };

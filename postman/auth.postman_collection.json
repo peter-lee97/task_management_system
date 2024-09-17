@@ -77,32 +77,32 @@
 								}
 							},
 							"response": []
+						},
+						{
+							"name": "register",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": {
+										"token": "{{token}}"
+									}
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\" : \"peter2\",\n    \"password\": \"qwepoi!!\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{base_url}}/api/v1/auth/admin/register"
+							},
+							"response": []
 						}
 					]
-				},
-				{
-					"name": "register",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": {
-								"token": "{{token}}"
-							}
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"username\" : \"peter2\",\n    \"password\": \"qwepoi!!\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": "{{base_url}}/api/v1/auth/register"
-					},
-					"response": []
 				},
 				{
 					"name": "login",
@@ -146,7 +146,7 @@
 								}
 							}
 						},
-						"url": "{{base_url}}/api/v1/auth/login"
+						"url": "{{base_url}}/api/v1/auth/ogin"
 					},
 					"response": []
 				},
@@ -225,7 +225,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/auth/?username=peter2",
+							"raw": "{{base_url}}/api/v1/auth/users?username=admin",
 							"host": [
 								"{{base_url}}"
 							],
@@ -233,12 +233,12 @@
 								"api",
 								"v1",
 								"auth",
-								""
+								"users"
 							],
 							"query": [
 								{
 									"key": "username",
-									"value": "peter2"
+									"value": "admin"
 								}
 							]
 						}
@@ -262,7 +262,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/user_group?username=peter2",
+							"raw": "{{base_url}}/api/v1/user_group?username=peter1",
 							"host": [
 								"{{base_url}}"
 							],
@@ -274,7 +274,7 @@
 							"query": [
 								{
 									"key": "username",
-									"value": "peter2"
+									"value": "peter1"
 								}
 							]
 						}
@@ -302,6 +302,15 @@
 							}
 						},
 						"url": "{{base_url}}/api/v1/user_group/create"
+					},
+					"response": []
+				},
+				{
+					"name": "New Request",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": "{{base_url}}/api/v1/user_group/remove"
 					},
 					"response": []
 				}

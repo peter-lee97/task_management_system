@@ -9,7 +9,7 @@ import { adminOnly, validateCookie } from "../../middleware/auth";
 
 const router = express.Router();
 
-router.get("/", [validateCookie, adminOnly, fetchUserGroups]);
+router.get("/", [validateCookie, fetchUserGroups]);
 router.get("/groups", [validateCookie, fetchGroups]);
 router.delete("/remove", [validateCookie, adminOnly, removeUserFromGroup]);
 router.post("/create", [validateCookie, adminOnly, addUserToGroup]);

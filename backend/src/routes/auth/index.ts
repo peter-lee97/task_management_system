@@ -1,4 +1,5 @@
 import express from "express";
+import assert from "node:assert";
 import {
   fetchUsers,
   login,
@@ -6,33 +7,27 @@ import {
   register,
   updateCredentials,
 } from "../../controllers/auth";
-import {
-  adminOnly,
-  validateActive,
-  validateCookie,
-} from "../../middleware/auth";
+import { adminOnly, validateCookie } from "../../middleware/auth";
 import { getDb } from "../../services/db";
 import { fetchUser } from "../../services/db/account";
-import { verifyToken } from "../../services/jwt";
 
 const router = express.Router();
 
-router.get("/validate", async (req, res) => {
+router.get("/validate", validateCookie, async (req, res) => {
   if (!req.cookies["token"]) {
     res.status(401).json({ message: "User not authenticated, please login" });
     return;
   }
-  const cookietoken = req.cookies["token"];
-  const payload = verifyToken(cookietoken, process.env.ENV_SECRET as string);
-  if (!payload) {
-    res.status(401).json({ message: "invalid token, please login" });
-    return;
-  }
+
+  assert(req.accountPayload != null, "req account payload should exists");
   const db = getDb();
-  const account = await fetchUser(db, payload.username);
-  res
-    .status(200)
-    .json({ message: "successful", result: account, isAdmin: payload.isAdmin });
+  const account = await fetchUser(db, req.accountPayload!.username);
+
+  res.status(200).json({
+    message: "successful",
+    result: account,
+    isAdmin: req.accountPayload.isAdmin,
+  });
   return;
 });
 
@@ -42,12 +37,11 @@ router.post("/logout", logout);
 router.get("/users", [validateCookie, fetchUsers]);
 
 // udpate infomation like credentials
-router.put("/update", [validateCookie, validateActive, updateCredentials]);
+router.put("/update", [validateCookie, updateCredentials]);
 
 // admin priviledge
 router.use("/admin", [validateCookie, adminOnly]);
 router.post("/admin/register", register);
-// router.post("/admin/reset", adminResetAccount);
 
 export default router;
 

@@ -4,13 +4,13 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { authStore, isAdminReadable, logoutAccount } from '$lib/authStore';
-	import { Toaster, toast } from 'svelte-sonner';
+	import { toast } from 'svelte-sonner';
 	import EditProfileModal from './EditProfileModal.svelte';
 	import { onDestroy } from 'svelte';
 
 	$: account = $authStore;
-
 	let showProfile = false;
+	let currentPageName: string = '';
 
 	const sub = authStore.subscribe((acc) => {
 		console.log(`changes in account: ${acc != null}`);
@@ -23,33 +23,33 @@
 		sub();
 	});
 
-	let isPath = (name: string): boolean => {
-		return $page.url.pathname === name;
-	};
+	page.subscribe((p) => {
+		currentPageName = p.url.pathname;
+	});
 </script>
 
 <nav>
-	{#if account != null}
+	{#if $authStore != null}
 		<h1>
-			Hello, {account.username}
+			Hello, {$authStore.username}
 		</h1>
 	{/if}
 	<div>
 		<button
 			class="system-button"
-			class:active={isPath('/app_management')}
+			class:active={'/home/app_management' == currentPageName}
 			on:click={() => {
-				goto('/app_management');
+				goto('/home/app_management');
 				console.log('Application pressed');
 			}}>Application</button
 		>
 		{#if $isAdminReadable}
 			<button
 				class="system-button"
-				class:active={isPath('/user_management')}
+				class:active={'/home/user_management' == currentPageName}
 				on:click={() => {
 					console.log('User Management');
-					goto('/user_management');
+					goto('/home/user_management');
 				}}>User Management</button
 			>
 		{/if}
@@ -64,28 +64,28 @@
 			Edit Profile
 		</button>
 	{/if}
-	<button
-		class="logout-button"
-		type="button"
-		on:click={() => {
-			logoutAccount();
-			goto('/login');
-		}}>Sign out</button
-	>
+	<div>
+		<EditProfileModal
+			bind:showModal={showProfile}
+			on:notification={(event) => {
+				if (event.detail.message) {
+					toast.info(event.detail.message);
+				} else if (event.detail.errorMessage) {
+					console.error(`error from edit profile: ${event.detail.errorMessage}`);
+					toast.error(event.detail.errorMessage);
+				}
+			}}
+		/>
+		<button
+			class="logout-button"
+			type="button"
+			on:click={() => {
+				logoutAccount();
+				goto('/login');
+			}}>Sign out</button
+		>
+	</div>
 </nav>
-<EditProfileModal
-	bind:showModal={showProfile}
-	on:notification={(event) => {
-		if (event.detail.message) {
-			toast.info(event.detail.message);
-		} else if (event.detail.errorMessage) {
-			console.error(`error from edit profile: ${event.detail.errorMessage}`);
-			toast.error(event.detail.errorMessage);
-		}
-	}}
-/>
-
-<Toaster />
 
 <style>
 	nav {

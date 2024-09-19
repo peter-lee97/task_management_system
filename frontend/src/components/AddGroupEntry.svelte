@@ -1,5 +1,5 @@
 <script lang="ts">
-	import '../../app.css';
+	import '../app.css';
 	export let submitHandler: () => void;
 	export let cancelHandler: () => void;
 	export let newGroupName: string | null;

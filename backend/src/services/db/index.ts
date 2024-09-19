@@ -1,7 +1,7 @@
 import mysql from "mysql2/promise";
 var connection: mysql.Connection | null;
 
-const createConnection = async ({
+const createConnection = ({
   host,
   username,
   password,
@@ -11,9 +11,10 @@ const createConnection = async ({
   username: string;
   password: string;
   database: string;
-}): Promise<void> => {
+}) => {
   try {
     connection = mysql.createPool({
+      connectionLimit: 100,
       host,
       user: username,
       password,

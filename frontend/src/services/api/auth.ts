@@ -1,9 +1,8 @@
 import { goto } from '$app/navigation';
 import { baseAPI, unexpectedErrorMsg } from '$lib';
 import { logoutAccount } from '$lib/authStore';
+import type { Account, AccountUpdate } from '$models';
 import { AxiosError } from 'axios';
-import type { Account } from '../../model';
-import type { AccountUpdate } from '../../model/account';
 
 export const login = async (username: string, password: string): Promise<Account> => {
 	const response = await baseAPI.post('/auth/login', {

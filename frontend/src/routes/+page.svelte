@@ -4,16 +4,16 @@
 	import { authStore, validateAccount } from '$lib/authStore';
 	import { browser } from '$app/environment';
 
-	onMount(async () => {
+	onMount(() => {
 		console.log(`onMount /`);
-		await validateAccount();
+		validateAccount();
 	});
 
 	const authSub = authStore.subscribe((value) => {
 		console.log(`changes in login: ${value != null}`);
 		if (!browser) return;
 		if (value) {
-			goto('/app_management');
+			goto('/home/app_management');
 		}
 	});
 

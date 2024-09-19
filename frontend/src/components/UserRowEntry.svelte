@@ -2,20 +2,18 @@
 	import { createEventDispatcher, onMount } from 'svelte';
 	import { allStatus } from '$lib';
 	import { groupStore } from '$lib/groupStore';
-	import { validateEmail, validatePassword } from '$lib/validate';
-	import '../app.css';
-	import type { Account, UserGroup } from '../model';
-	import UserGroupsEntry from './UserGroupsEntry.svelte';
-	import EditIcon from './icons/EditIcon.svelte';
-	import type { AccountUpdate } from '../model/account';
 	import { writable } from 'svelte/store';
+	import { validateEmail, validatePassword } from '$lib/validate';
+
+	import type { Account, UserGroup, AccountUpdate } from '$models';
+	import UserGroupsEntry from '$components/UserGroupsEntry.svelte';
+	import EditIcon from '$components/icons/EditIcon.svelte';
+	import '../app.css';
 
 	export let account: Account;
 	export let currentGroups: UserGroup[] | undefined;
 
-	$: {
-		if (!isEditProfile) resetEntries();
-	}
+	$: if (!isEditProfile) resetEntries();
 
 	let isEditProfile: boolean = false;
 

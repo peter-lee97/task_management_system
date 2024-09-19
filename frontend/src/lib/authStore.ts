@@ -1,12 +1,9 @@
+import type { Account, AccountUpdate } from '$models';
+import { logout, validateUser } from '$services';
 import { get, readable, writable } from 'svelte/store';
-import type { Account } from '../model';
-import type { AccountUpdate } from '../model/account';
-import { logout, validateUser } from '../services/api/auth';
 
 export const authStore = writable<Account | null>();
-
 const _isAdmin = false;
-
 const isAdminWritable = writable(_isAdmin);
 
 // Create a readable store for isAdmin that can only be read externally

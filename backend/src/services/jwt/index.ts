@@ -20,15 +20,16 @@ export const generateToken = ({
     },
     secret,
     {
-      expiresIn: expiresIn,
+      expiresIn,
     }
   );
 };
 
 export const verifyToken = (
-  token: string,
+  token: string | null,
   secret: string
 ): AccountPayload | null => {
+  if (token == null) return null;
   let parsePayload;
   try {
     const payload = jwt.verify(token, secret);

@@ -2,10 +2,10 @@
 	import { AxiosError } from 'axios';
 	import { onDestroy, onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { authStore, validateAccount } from '$lib/authStore';
+	import { authStore, setAccount, validateAccount } from '$lib/authStore';
+	import { login } from '$services';
+	import { toast } from 'svelte-sonner';
 	import '../../app.css';
-	import { login } from '../../services/api/auth';
-	import { Toaster, toast } from 'svelte-sonner';
 
 	let username: string | undefined;
 	let password: string | undefined;
@@ -13,21 +13,17 @@
 
 	$: showButton = username && password ? true : false;
 
-	onMount(async () => {
-		console.log(`onMount /`);
-		await validateAccount();
+	onMount(() => {
+		validateAccount();
+	});
+	onDestroy(() => {
+		authSub();
 	});
 
 	const authSub = authStore.subscribe((value) => {
-		console.log(`changes in login: ${value != null}`);
 		if (value) {
-			goto('/app_management');
+			goto('/home/app_management');
 		}
-	});
-
-	onDestroy(() => {
-		authSub();
-		console.log('/ destroyed');
 	});
 
 	async function loginHandler() {
@@ -36,23 +32,17 @@
 			console.log(`entries are found empty`);
 			return;
 		}
-
-		try {
-			const response = await login(username, password);
-			authStore.set(response);
-			goto('/app_management');
-		} catch (error) {
-			if (error instanceof AxiosError) {
-				if (error.response) {
-					errorMessage = error.response!.data.message || 'An error occured during login';
-				} else {
-					errorMessage = 'Network Error. Please try again later';
-				}
-			} else {
-				errorMessage = 'An unexpected error occured';
-			}
-		}
-		if (errorMessage) toast.error(errorMessage);
+		login(username, password)
+			.then((response) => {
+				if (response == null) return;
+				setAccount(response);
+				// goto('/home/app_management');
+			})
+			.catch((e) => {
+				if (e instanceof AxiosError) {
+					toast.error(e.response?.data.message ?? 'Network error. Please try again later');
+				} else toast.error('Network Error. Please try again later');
+			});
 	}
 </script>
 
@@ -69,7 +59,6 @@
 			{/if} -->
 		</form>
 	</div>
-	<Toaster />
 </body>
 
 <style>

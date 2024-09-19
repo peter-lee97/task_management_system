@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { Account } from '../../model';
+	import type { Account } from '$models';
 	import { validateEmail, validatePassword, validateUsername } from '$lib/validate';
 	import { allStatus } from '$lib';
-	import UserGroupsEntry from '../../components/UserGroupsEntry.svelte';
+	import UserGroupsEntry from '$components/UserGroupsEntry.svelte';
 
 	export let groups: string[];
 
 	const dispatch = createEventDispatcher<{
-		click: { newAccount: Account; newGroups?: string[] };
+		submit: { newAccount: Account; newGroups?: string[] };
 		notification: { message?: string; errorMessage?: string };
 	}>();
 
@@ -36,7 +36,7 @@
 		console.log(`newgroup: ${newGroups}`);
 		if (newGroups.length > 0) payload['newGroups'] = newGroups;
 
-		dispatch('click', payload);
+		dispatch('submit', payload);
 		clearEntry();
 	};
 

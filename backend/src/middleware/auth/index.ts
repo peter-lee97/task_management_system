@@ -1,11 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import assert from "node:assert";
 import { AccountDB, getDb } from "../../services/db";
-import { Checkgroup } from "../../services/db/user_group";
+import { Checkgroup, fetchByUsername } from "../../services/db/user_group";
 import { generateToken, verifyToken } from "../../services/jwt";
 
 /**
- * Validate via cookie.
  * 1. Check Token validity
  * 2. Check `accountStatus` is active
  * @param req
@@ -19,6 +18,8 @@ export const validateCookie = async (
   next: NextFunction
 ): Promise<void> => {
   let token: string | undefined;
+  const ipAddress = req.socket.remoteAddress;
+  const userAgent = req.get("User-Agent") ?? "NOT_FOUND";
 
   if (!req.cookies["token"]) {
     console.log("no cookies found");
@@ -34,12 +35,15 @@ export const validateCookie = async (
       return;
     }
 
+    if (payload.ipAddress !== ipAddress || payload.userAgent != userAgent) {
+      res.clearCookie("token").json({ message: "Not authorized to acces " });
+      return;
+    }
     // inject pw hash here
     const db = getDb();
     const account = await AccountDB.fetchUser(db, payload.username);
 
     assert(account != null, "account should not be null");
-
     assert(
       account!.username === payload.username,
       "account and payload username should be the same"
@@ -53,25 +57,22 @@ export const validateCookie = async (
       });
       return;
     }
+
     const isAdmin = await Checkgroup(account.username, "ADMIN");
 
     if (payload.isAdmin != isAdmin) {
       console.log("Refresh token");
       const newPayload = { ...payload, isAdmin };
-      generateToken({
+      token = generateToken({
         secret: process.env.ENV_SECRET as string,
         jwtPayload: newPayload,
-        expiresIn: process.env.EXPIRES_IN ?? "1d",
+        expiresIn: process.env.TOKEN_EXPIRY ?? "1d",
       });
-      req.accountPayload = newPayload;
       res.cookie("token", token, {
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 5, // 5 hours for now
       });
-    } else {
-      req.accountPayload = { ...payload };
     }
-
     next();
   } catch (error) {
     console.error(`failed to validate cookie: ${error}`);
@@ -82,30 +83,43 @@ export const validateCookie = async (
 };
 
 /**
- * `validateCookie()` must be called before calling this
- *
- * req.accountPayload must exists
- * @param req
- * @param res
- * @param next
+ * if `groups` is empty, then no need to check
+ * @param checkGroups
+ * @param secret
+ * @returns
  */
-export const adminOnly = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
-  assert(
-    req.accountPayload,
-    "accountPayload must be exists, check if validateCookie is called first"
-  );
-  if (!req.accountPayload) {
-    res.status(401).json({ message: "Not authorized to access" });
-    return;
-  }
-  const accountPayload = req.accountPayload!;
+export const authorizedGroups =
+  (checkGroups: string[], secret: string) =>
+  async (req: Request, res: Response, next: NextFunction) => {
+    assert(req.cookies["token"], "cookie must exists");
+    if (req.cookies.token == null) {
+      res.status(401).json({ message: "Unauthorized to access routes" });
+      return;
+    }
+    const payload = verifyToken(req.cookies.token, secret);
+    if (!payload) {
+      res.status(401).json({ message: "Unauthorized to access routes" });
+      return;
+    }
 
-  accountPayload.isAdmin
-    ? next()
-    : res.status(401).json({ message: "Not authorized to access" });
-  return;
-};
+    if (0 == checkGroups.length) {
+      next();
+      return;
+    }
+
+    const username = payload.username;
+    const db = getDb();
+
+    const g = await fetchByUsername(db, username);
+    if (g.length == 0) {
+      res.status(401).json({ message: "Unauthorized to access routes" });
+      return;
+    }
+    const currentGroups = g.map((e) => e.user_group);
+    const checkGroupSet = new Set(checkGroups);
+
+    // current groups in at least one checkGroups
+    const filteredGroups = currentGroups.filter((e) => checkGroupSet.has(e));
+    if (filteredGroups.length == 0) return;
+    next();
+  };

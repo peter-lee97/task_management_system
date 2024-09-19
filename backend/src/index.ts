@@ -27,7 +27,7 @@ createConnection({
   password,
   username,
   database,
-}).then((_) => console.log(`connection established`));
+});
 
 const init = async () => {
   app.get("/", (_, response) => {

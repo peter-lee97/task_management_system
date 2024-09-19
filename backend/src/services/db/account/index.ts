@@ -8,7 +8,7 @@ export const fetchUser = async (
   const sql = "SELECT * FROM accounts WHERE username = ? LIMIT 1";
   const values = [username];
   try {
-    const [result] = await db.query<Account[]>(sql, values);
+    const [result] = await db.execute<Account[]>(sql, values);
     return result.length > 0 ? result[0] : null;
   } catch (error) {
     throw error;
@@ -59,7 +59,6 @@ export const updateUser = async (
     if (inserted.affectedRows == 0) return null;
     return fetchUser(db, account.username);
   } catch (error) {
-    console.error("Failed to update user: ", error);
     throw error;
   }
 };

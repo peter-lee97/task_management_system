@@ -7,15 +7,10 @@ export const fetchByUsername = async (
   db: Connection,
   username: string
 ): Promise<UserGroup[]> => {
+  const sql = "SELECT * FROM UserGroup WHERE username = ? ORDER BY username";
+  const values = [username];
   try {
-    const [result] = await db.query<UserGroup[]>(
-      `
-        SELECT *
-        FROM UserGroup
-        WHERE username = '${username}'
-        ORDER BY username
-        `
-    );
+    const [result] = await db.execute<UserGroup[]>(sql, values);
     return result;
   } catch (error) {
     throw error;
@@ -30,7 +25,7 @@ export const fetchByGroupname = async (
   const values = [groupname];
 
   try {
-    const [result] = await db.query<UserGroup[]>(sql, values);
+    const [result] = await db.execute<UserGroup[]>(sql, values);
     return result;
   } catch (error) {
     throw error;
@@ -47,7 +42,7 @@ export const fetchByGroupAndUsername = async (
     "SELECT * FROM UserGroup WHERE user_group = ? AND username = ? LIMIT 1";
   const values = [groupname, username];
   try {
-    const [result] = await db.query<UserGroup[]>(sql, values);
+    const [result] = await db.execute<UserGroup[]>(sql, values);
     return result.length > 0 ? result[0] : null;
   } catch (error) {
     throw error;
@@ -69,11 +64,6 @@ export const addToGroup = async (
   const values = [username, usergroup];
   try {
     const [result] = await db.execute<ResultSetHeader>(sql, values);
-    console.log(
-      `new entry ${JSON.stringify(
-        result.affectedRows
-      )} in user group: ${username} | ${usergroup}`
-    );
   } catch (error) {
     throw error;
   }
@@ -106,7 +96,7 @@ export const isUserAdmin = async (
   `;
   const values = [username, "%admin%"];
   try {
-    const [result] = await db.query<UserGroup[]>(sql, values);
+    const [result] = await db.execute<UserGroup[]>(sql, values);
     if (result.length == 0) return false;
     if (Object.values(result[0])[0] == 1) return true;
   } catch (error) {
@@ -125,7 +115,7 @@ export const Checkgroup = async (
     "SELECT * FROM UserGroup WHERE username = ? AND user_group = ? ORDER BY username, user_group";
   const values = [username, groupname];
   try {
-    const [result] = await db.query<UserGroup[]>(sql, values);
+    const [result] = await db.execute<UserGroup[]>(sql, values);
     return result.length != 0;
   } catch (error) {
     throw error;

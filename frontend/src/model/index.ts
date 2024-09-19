@@ -1,4 +1,4 @@
-export type { Account } from './account';
+export type { Account, AccountUpdate } from './account';
 export type { Application } from './application';
 export type { Plan } from './plan';
 export type { Task } from './task';

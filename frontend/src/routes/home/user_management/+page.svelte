@@ -1,33 +1,34 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { toast, Toaster } from 'svelte-sonner';
+	import { toast } from 'svelte-sonner';
 	import { groupStore } from '$lib/groupStore';
-	import { isAdminReadable, validateAccount } from '$lib/authStore';
-	import type { Account, UserGroup } from '../../model';
-	import { fetchAllUsers, register, updateUser } from '../../services/api/auth';
-	import { addGroup, fetchUserGroups, removeFromGroup } from '../../services/api/user_group';
-	import Modal from '../../components/Modal.svelte';
-	import UserRowEntry from '../../components/UserRowEntry.svelte';
-	import AddUserEntry from './AddUserEntry.svelte';
-	import NavBar from '../../components/NavBar.svelte';
-	import ManagementBanner from '../../components/ManagementBanner.svelte';
-	import AddGroupEntry from './AddGroupEntry.svelte';
 	import { writable } from 'svelte/store';
-	import { AxiosError } from 'axios';
-	import { error } from '@sveltejs/kit';
 	import { validateGroup } from '$lib/validate';
+	import { isAdminReadable, validateAccount } from '$lib/authStore';
+	import type { Account, UserGroup } from '$models';
+	import {
+		addGroup,
+		fetchUserGroups,
+		removeFromGroup,
+		fetchAllUsers,
+		register,
+		updateUser
+	} from '$services';
+	import Modal from '$components/Modal.svelte';
+	import UserRowEntry from '$components/UserRowEntry.svelte';
+	import ManagementBanner from '$components/ManagementBanner.svelte';
+	import AddUserEntry from '$components/AddUserEntry.svelte';
+	import AddGroupEntry from '$components/AddGroupEntry.svelte';
 
 	let userAccounts: Record<string, Account> = {};
 	let userGroups = writable<Record<string, UserGroup[]>>();
 	let newGroupName: string | null;
 
 	let showCreateGroup = false;
-	let isLoaded = false;
 
 	onMount(async () => {
 		console.log(`onMount userManagement`);
 		await validateAccount();
-
 		if ($isAdminReadable) {
 			const accounts = await fetchAllUsers();
 			groupStore.fetch();
@@ -49,8 +50,6 @@
 					});
 				});
 		}
-
-		isLoaded = true;
 	});
 
 	function toggleShowGroup() {
@@ -68,7 +67,6 @@
 		await addGroup(newGroupName)
 			.then((value) => {
 				toast.success(`${value?.user_group} group added`);
-				toggleShowGroup();
 			})
 			.catch((err) => {
 				toast.error(err);
@@ -78,14 +76,13 @@
 	}
 </script>
 
-<NavBar />
 <Modal bind:showModal={showCreateGroup}>
 	<AddGroupEntry bind:newGroupName submitHandler={submitGroup} cancelHandler={toggleShowGroup} />
 </Modal>
 <ManagementBanner title="User Management">
 	<button slot="action" type="button" on:click={toggleShowGroup}>+ Group</button>
 </ManagementBanner>
-<Toaster />
+
 <div class="table-container">
 	<table>
 		<thead>
@@ -109,7 +106,7 @@
 							toast.message(event.detail.message);
 						}
 					}}
-					on:click={async (event) => {
+					on:submit={async (event) => {
 						const newAccount = event.detail.newAccount;
 						const newGroups = event.detail.newGroups;
 						try {
@@ -157,7 +154,6 @@
 									if (updatedAccount == null) return;
 									userAccounts = { ...userAccounts, [username]: updatedAccount };
 									toast.success(`account ${newAccount.username} updated`);
-									console.log(`row updated: ${JSON.stringify(updatedAccount)}`);
 								})
 								.catch((e) => toast.error(e));
 						}
@@ -190,7 +186,7 @@
 	table {
 		margin-left: auto;
 		margin-right: auto;
-		width: 90%;
+		width: 100%;
 		border-collapse: collapse;
 	}
 	thead {

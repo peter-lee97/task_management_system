@@ -44,7 +44,7 @@ export const fetchGroups = async (): Promise<string[]> => {
 export const addGroup = async (usergroup: string, username?: string): Promise<UserGroup | null> => {
 	console.log('[addGroup]');
 	try {
-		const response = await baseAPI.post('/user_group/create', {
+		const response = await baseAPI.post('/user_group', {
 			username,
 			usergroup
 		});
@@ -69,7 +69,7 @@ export const addGroup = async (usergroup: string, username?: string): Promise<Us
 export const removeFromGroup = async (usergroup: string, username: string) => {
 	console.log('[removeFromGroup]');
 	try {
-		await baseAPI.delete('/user_group/remove', {
+		await baseAPI.delete('/user_group', {
 			params: {
 				username,
 				usergroup

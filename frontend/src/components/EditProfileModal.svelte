@@ -4,8 +4,9 @@
 	import Modal from './Modal.svelte';
 	import { authStore, checkAccountChange } from '$lib/authStore';
 	import { updateUser } from '../services/api/auth';
-	import type { AccountUpdate } from '../model/account';
+
 	import { validateEmail, validatePassword } from '$lib/validate';
+	import type { UpdateAccount } from '$models';
 
 	onMount(() => {
 		authStore.subscribe((a) => {
@@ -19,7 +20,7 @@
 	});
 
 	export let showModal: boolean;
-	let accountCopy: AccountUpdate | null;
+	let accountCopy: UpdateAccount | null;
 
 	const dispatch = createEventDispatcher<{
 		notification: { message?: string; errorMessage?: string };

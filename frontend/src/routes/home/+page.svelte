@@ -1,8 +1,10 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { validateAccount } from '$lib/authStore';
+	import { onMount } from 'svelte';
 
-	export function load() {
-		console.log(`redirecting`);
-		goto('/app_management');
-	}
+	onMount(() => {
+		validateAccount();
+	});
 </script>
+
+<h1>home page</h1>

@@ -29,16 +29,17 @@ export const createUser = async (
   db: Connection,
   account: Account
 ): Promise<Account | null> => {
+  const sql =
+    "INSERT INTO accounts (username, password, email) VALUES (?, ?, ?)";
+  const values = [account.username, account.password, account.email ?? null];
   try {
-    const sql =
-      "INSERT INTO accounts (username, password, email) VALUES (?, ?, ?)";
-    const values = [account.username, account.password, account.email ?? null];
     const [inserted] = await db.execute<ResultSetHeader>(sql, values);
     if (inserted.affectedRows == 0) return null;
   } catch (error) {
     console.error(error);
     throw error;
   }
+
   return fetchUser(db, account.username);
 };
 

@@ -1,6 +1,6 @@
 use tms;
 
--- Assignment 1
+-- Assignment 1: 
 INSERT INTO
   `accounts` (`username`, `password`, `email`)
 VALUES
@@ -19,5 +19,3 @@ INSERT INTO
   UserGroup (username, user_group)
 VALUES
   ('admin', 'ADMIN');
-
--- Assignment 2

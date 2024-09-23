@@ -1,7 +1,7 @@
 import { goto } from '$app/navigation';
 import { baseAPI, unexpectedErrorMsg } from '$lib';
 import { logoutAccount } from '$lib/authStore';
-import type { Account, AccountUpdate } from '$models';
+import type { Account, UpdateAccount } from '$models';
 import { AxiosError } from 'axios';
 
 export const login = async (username: string, password: string): Promise<Account> => {
@@ -109,9 +109,9 @@ export const fetchAllUsers = async (): Promise<Account[]> => {
 	}
 };
 
-export const updateUser = async (account: AccountUpdate): Promise<Account | null> => {
+export const updateUser = async (account: UpdateAccount): Promise<Account | null> => {
 	try {
-		const response = await baseAPI.put('/auth/update', account, {
+		const response = await baseAPI.put('/auth/users', account, {
 			params: { username: account.username }
 		});
 

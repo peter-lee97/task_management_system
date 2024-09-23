@@ -5,7 +5,7 @@
 	import { page } from '$app/stores';
 	import { authStore, isAdminReadable, logoutAccount } from '$lib/authStore';
 	import { toast } from 'svelte-sonner';
-	import EditProfileModal from './EditProfileModal.svelte';
+	import EditProfileModal from '$components/EditProfileModal.svelte';
 	import { onDestroy } from 'svelte';
 
 	$: account = $authStore;
@@ -116,7 +116,6 @@
 	}
 
 	.profile {
-		text-decoration: underline;
 		font-size: 16px;
 	}
 

@@ -1,4 +1,4 @@
-import type { Account, AccountUpdate } from '$models';
+import type { Account, UpdateAccount } from '$models';
 import { logout, validateUser } from '$services';
 import { get, readable, writable } from 'svelte/store';
 
@@ -28,7 +28,7 @@ export const setAccount = (account: Account | null) => {
  * @param update
  * @returns
  */
-export const checkAccountChange = (update: AccountUpdate): boolean => {
+export const checkAccountChange = (update: UpdateAccount): boolean => {
 	const current = get(authStore);
 	if (current?.email !== update.email) return false;
 	if (update.password !== null && update.password !== undefined) return false;

@@ -5,7 +5,7 @@
 	import { writable } from 'svelte/store';
 	import { validateEmail, validatePassword } from '$lib/validate';
 
-	import type { Account, UserGroup, AccountUpdate } from '$models';
+	import type { Account, UserGroup, UpdateAccount } from '$models';
 	import UserGroupsEntry from '$components/UserGroupsEntry.svelte';
 	import EditIcon from '$components/icons/EditIcon.svelte';
 	import '../app.css';
@@ -33,7 +33,7 @@
 
 	const eventDispatcher = createEventDispatcher<{
 		submit: {
-			newAccount?: AccountUpdate;
+			newAccount?: UpdateAccount;
 			newGroups?: string[];
 			removeGroups?: string[];
 		};
@@ -42,7 +42,7 @@
 
 	function submitHandler() {
 		const payload: {
-			newAccount?: AccountUpdate;
+			newAccount?: UpdateAccount;
 			newGroups?: string[];
 			removeGroups?: string[];
 		} = {};

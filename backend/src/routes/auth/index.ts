@@ -1,4 +1,5 @@
 import express from "express";
+
 import {
   fetchUsers,
   login,
@@ -7,17 +8,18 @@ import {
   updateCredentials,
 } from "../../controllers/auth";
 import { authorizedGroups, validateCookie } from "../../middleware/auth";
-import { getDb } from "../../services/db";
-import { fetchUser } from "../../services/db/account";
+import { AccountDB, getDb, UserGroupDB } from "../../services/db";
 import { verifyToken } from "../../services/jwt";
 
 const router = express.Router();
 
 router.get("/validate", validateCookie, async (req, res) => {
+  console.log("[validate]");
   if (!req.cookies["token"]) {
-    res.status(401).json({ message: "User not authenticated, please login" });
+    res.status(401).json({ message: "Unauthorized to access route" });
     return;
   }
+
   const payload = verifyToken(
     req.cookies.token,
     process.env.ENV_SECRET as string
@@ -29,14 +31,13 @@ router.get("/validate", validateCookie, async (req, res) => {
   }
 
   const db = getDb();
-  const account = await fetchUser(db, payload.username);
+  const account = await AccountDB.fetchUser(db, payload.username);
 
   res.status(200).json({
     message: "successful",
     result: account,
-    isAdmin: payload.isAdmin,
+    isAdmin: await UserGroupDB.Checkgroup(payload.username, "admin"),
   });
-
   return;
 });
 
@@ -46,13 +47,10 @@ router.post("/logout", logout);
 router.get("/users", [validateCookie, fetchUsers]);
 
 // udpate infomation like credentials
-router.put("/update", [validateCookie, updateCredentials]);
+router.put("/users", [validateCookie, updateCredentials]);
 
 // admin priviledge
-router.use("/admin", [
-  validateCookie,
-  authorizedGroups(["ADMIN"], process.env.ENV_SECRET as string),
-]);
+router.use("/admin", [validateCookie, authorizedGroups(["ADMIN"])]);
 router.post("/admin/register", register);
 
 export default router;

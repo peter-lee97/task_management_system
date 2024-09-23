@@ -34,4 +34,5 @@ export function getDb(): mysql.Connection {
 export default createConnection;
 
 export * as AccountDB from "./account";
+export * as TMSDB from "./tms";
 export * as UserGroupDB from "./user_group";

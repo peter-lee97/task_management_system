@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import assert from "node:assert";
-import { AccountDB, getDb } from "../../services/db";
-import { Checkgroup, fetchByUsername } from "../../services/db/user_group";
+import { AccountDB, getDb, UserGroupDB } from "../../services/db";
 import { generateToken, verifyToken } from "../../services/jwt";
 
 /**
@@ -23,7 +22,7 @@ export const validateCookie = async (
 
   if (!req.cookies["token"]) {
     console.log("no cookies found");
-    res.status(401).json({ message: "Access expired" });
+    res.status(401).json({ message: "Access expired. Please login again." });
     return;
   }
   token = req.cookies["token"] as string;
@@ -31,12 +30,14 @@ export const validateCookie = async (
   try {
     const payload = verifyToken(token, process.env.ENV_SECRET as string);
     if (!payload) {
-      res.status(401).json({ message: "Not authorized to access" });
+      res.status(401).json({ message: "Unauthorized to access route" });
       return;
     }
 
     if (payload.ipAddress !== ipAddress || payload.userAgent != userAgent) {
-      res.clearCookie("token").json({ message: "Not authorized to acces " });
+      res
+        .clearCookie("token")
+        .json({ message: "Unauthorized to access route" });
       return;
     }
     // inject pw hash here
@@ -53,16 +54,15 @@ export const validateCookie = async (
     if (account.accountStatus !== "active") {
       console.log("account status is disabled, cannot continue");
       res.status(401).json({
-        message: "Not authorized to access",
+        message: "Unauthorized to access route",
       });
       return;
     }
 
-    const isAdmin = await Checkgroup(account.username, "ADMIN");
+    const isAdmin = await UserGroupDB.Checkgroup(account.username, "ADMIN");
 
-    if (payload.isAdmin != isAdmin) {
-      console.log("Refresh token");
-      const newPayload = { ...payload, isAdmin };
+    if (isAdmin) {
+      const newPayload = { ...payload };
       token = generateToken({
         secret: process.env.ENV_SECRET as string,
         jwtPayload: newPayload,
@@ -70,8 +70,9 @@ export const validateCookie = async (
       });
       res.cookie("token", token, {
         httpOnly: true,
-        maxAge: 1000 * 60 * 60 * 5, // 5 hours for now
+        maxAge: 1000 * 60 * 60 * parseInt(process.env.COOKIE_EXPIRY as string), // 5 hours for now
       });
+      console.log("added refreshed coookie");
     }
     next();
   } catch (error) {
@@ -83,43 +84,49 @@ export const validateCookie = async (
 };
 
 /**
- * if `groups` is empty, then no need to check
+ * `groups` length is empty, as not authorized
  * @param checkGroups
  * @param secret
  * @returns
  */
 export const authorizedGroups =
-  (checkGroups: string[], secret: string) =>
+  (checkGroups: string[]) =>
   async (req: Request, res: Response, next: NextFunction) => {
+    console.log("[authorizedGroups]");
+    assert(checkGroups.length > 0, "check groups contain at least 1 value");
     assert(req.cookies["token"], "cookie must exists");
+
     if (req.cookies.token == null) {
-      res.status(401).json({ message: "Unauthorized to access routes" });
+      console.log("cookie token not found");
+      res.status(401).json({ message: "Unauthorized to access route" });
       return;
     }
-    const payload = verifyToken(req.cookies.token, secret);
+    const payload = verifyToken(
+      req.cookies.token,
+      process.env.ENV_SECRET as string
+    );
     if (!payload) {
-      res.status(401).json({ message: "Unauthorized to access routes" });
+      res.status(401).json({ message: "Unauthorized to access route" });
       return;
     }
 
     if (0 == checkGroups.length) {
-      next();
+      res.status(403).json({ message: "Unauthorized to access resource" });
       return;
     }
 
     const username = payload.username;
-    const db = getDb();
 
-    const g = await fetchByUsername(db, username);
-    if (g.length == 0) {
-      res.status(401).json({ message: "Unauthorized to access routes" });
+    let isValue = false;
+
+    for await (const g of new Set(checkGroups)) {
+      isValue = await UserGroupDB.Checkgroup(username, g);
+      if (isValue) break;
+    }
+
+    if (!isValue) {
+      res.status(401).json({ message: "Unauthorized to access route" });
       return;
     }
-    const currentGroups = g.map((e) => e.user_group);
-    const checkGroupSet = new Set(checkGroups);
-
-    // current groups in at least one checkGroups
-    const filteredGroups = currentGroups.filter((e) => checkGroupSet.has(e));
-    if (filteredGroups.length == 0) return;
     next();
   };

@@ -16,7 +16,7 @@
 	} from '$services';
 	import Modal from '$components/Modal.svelte';
 	import UserRowEntry from '$components/UserRowEntry.svelte';
-	import ManagementBanner from '$components/ManagementBanner.svelte';
+	import ActionBanner from '$components/ManagementBanner.svelte';
 	import AddUserEntry from '$components/AddUserEntry.svelte';
 	import AddGroupEntry from '$components/AddGroupEntry.svelte';
 
@@ -79,9 +79,9 @@
 <Modal bind:showModal={showCreateGroup}>
 	<AddGroupEntry bind:newGroupName submitHandler={submitGroup} cancelHandler={toggleShowGroup} />
 </Modal>
-<ManagementBanner title="User Management">
+<ActionBanner title="User Management">
 	<button slot="action" type="button" on:click={toggleShowGroup}>+ Group</button>
-</ManagementBanner>
+</ActionBanner>
 
 <div class="table-container">
 	<table>

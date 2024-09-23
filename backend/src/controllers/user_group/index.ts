@@ -1,11 +1,5 @@
 import { Request, Response } from "express";
 import { getDb, UserGroupDB } from "../../services/db";
-import {
-  addToGroup,
-  Checkgroup,
-  fetchByGroupAndUsername,
-  removeFromGroup,
-} from "../../services/db/user_group";
 
 // Use fetch all usergroup rows with username
 export const fetchUserGroups = async (req: Request, res: Response) => {
@@ -32,9 +26,14 @@ export const fetchUserGroups = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * fetch available groups in string[]
+ * @param req
+ * @param res
+ */
 export const fetchGroups = async (req: Request, res: Response) => {
+  console.log("[fetchGroup]");
   const db = getDb();
-
   try {
     const [result] = await db.query(
       "SELECT DISTINCT user_group FROM usergroup ORDER BY user_group;"
@@ -51,6 +50,7 @@ export const fetchGroups = async (req: Request, res: Response) => {
 };
 
 export const removeUserFromGroup = async (req: Request, res: Response) => {
+  console.log("[removeUserFromGroup]");
   const username = req.query["username"] as string;
   const usergroup = req.query["usergroup"] as string;
 
@@ -61,21 +61,20 @@ export const removeUserFromGroup = async (req: Request, res: Response) => {
     return;
   }
   const db = getDb();
-  const inGroup = await Checkgroup(username, usergroup);
+  const inGroup = await UserGroupDB.Checkgroup(username, usergroup);
   if (!inGroup) {
-    return res.status(200).send({ message: "successfully updated" });
+    console.log(`nothing to remove in user group`);
+    return res.status(200).send({ message: "success" });
   }
 
-  if (
-    username == "admin" &&
-    req.accountPayload?.isAdmin &&
-    usergroup === "ADMIN"
-  ) {
+  if (username == "admin" && usergroup === "ADMIN") {
     console.log("should not remove admin from ADMIN");
-    return res.status(200).send({ message: "successfully updated" });
+    return res
+      .status(400)
+      .send({ message: "hardcoded admin cannot be removed" });
   }
 
-  await removeFromGroup(db, username, usergroup);
+  await UserGroupDB.removeFromGroup(db, username, usergroup);
   res.status(200).send({ message: "update successful" });
 };
 
@@ -88,17 +87,25 @@ export const addUserToGroup = async (req: Request, res: Response) => {
     return;
   }
 
-  try {
-    const inGroup = await Checkgroup(username, usergroup);
-    console.log(`is group exists: ${inGroup} | ${username} | ${usergroup}`);
+  const groupExists = await UserGroupDB.Checkgroup("", usergroup);
+  if (!groupExists) {
+    res.status(400).json({ message: `${usergroup} group do not exists.` });
+    return;
+  }
 
+  try {
+    const inGroup = await UserGroupDB.Checkgroup(username, usergroup);
     if (inGroup) {
       res.status(400).send({ message: "Entry already exists" });
       return;
     }
 
-    await addToGroup(db, username, usergroup);
-    const group = await fetchByGroupAndUsername(db, username, usergroup);
+    await UserGroupDB.addToGroup(db, username, usergroup);
+    const group = await UserGroupDB.fetchByGroupAndUsername(
+      db,
+      username,
+      usergroup
+    );
     res.status(200).send({ message: "success", result: group });
   } catch (error) {
     if (error instanceof Error) {

@@ -3,7 +3,7 @@ import cors from "cors";
 import { config } from "dotenv";
 import express from "express";
 
-import { auth, usergroup } from "./routes/";
+import { auth, tms, usergroup } from "./routes/";
 import createConnection, { getDb } from "./services/db";
 
 // configures dotenv to work in your application
@@ -41,6 +41,7 @@ const init = async () => {
   // Handlers
   app.use("/api/v1/auth", auth);
   app.use("/api/v1/user_group", usergroup);
+  app.use("/api/v1/tms", tms);
 
   app
     .listen(PORT, () => {

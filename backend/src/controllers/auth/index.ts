@@ -1,8 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-
 import { Account } from "../../model";
-import { AccountDB, getDb } from "../../services/db";
-import { Checkgroup } from "../../services/db/user_group";
+import { AccountDB, getDb, UserGroupDB } from "../../services/db";
+
 import {
   compareHash,
   generateToken,
@@ -36,7 +35,7 @@ export async function login(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const isAdmin = await Checkgroup(account.username, "ADMIN");
+    const isAdmin = await UserGroupDB.Checkgroup(account.username, "ADMIN");
 
     if (!(await compareHash(password, account.password))) {
       console.log("password do not patch");
@@ -157,14 +156,16 @@ export const updateCredentials = async (
 
   const { accountStatus, email, password } = req.body;
 
-  if (payload.username !== username && !payload.isAdmin) {
-    res.status(401).json({ message: "User not authorized" });
+  const isAdmin = await UserGroupDB.Checkgroup(payload.username, "ADMIN");
+
+  if (payload.username !== username && !isAdmin) {
+    res.status(401).json({ message: "Unauthorized to access route" });
     return;
   }
 
-  if (!payload.isAdmin && accountStatus) {
+  if (!isAdmin && accountStatus) {
     console.log("non admin trying to change account status");
-    res.status(401).json({ message: "User not authorized" });
+    res.status(401).json({ message: "Unauthorized to access route" });
     return;
   }
 

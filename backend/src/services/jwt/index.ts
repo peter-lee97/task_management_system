@@ -1,3 +1,4 @@
+import assert from "assert";
 import { compare, hash } from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { AccountPayload } from "../../model/index";
@@ -11,9 +12,9 @@ export const generateToken = ({
   jwtPayload: AccountPayload;
   secret: string;
 }): string => {
+  assert(secret, "secret cannot be null");
   return jwt.sign(
     {
-      isAdmin: jwtPayload.isAdmin,
       ipAddress: jwtPayload.ipAddress,
       userAgent: jwtPayload.userAgent,
       username: jwtPayload.username,
@@ -36,7 +37,6 @@ export const verifyToken = (
     parsePayload = JSON.parse(JSON.stringify(payload));
     return {
       ipAddress: parsePayload["ipAddress"],
-      isAdmin: parsePayload["isAdmin"],
       userAgent: parsePayload["userAgent"],
       username: parsePayload["username"],
     };

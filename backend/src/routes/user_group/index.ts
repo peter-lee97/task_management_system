@@ -8,19 +8,12 @@ import {
 import { authorizedGroups, validateCookie } from "../../middleware/auth";
 
 const router = express.Router();
-const secret = process.env.ENV_SECRET as string;
 
-router.get("/", [validateCookie, fetchUserGroups]);
-router.get("/groups", [validateCookie, fetchGroups]);
-router.delete("/remove", [
-  validateCookie,
-  authorizedGroups(["ADMIN"], secret),
-  removeUserFromGroup,
-]);
-router.post("/create", [
-  validateCookie,
-  authorizedGroups(["ADMIN"], secret),
-  addUserToGroup,
-]);
+router.use(validateCookie);
+
+router.get("/groups", fetchGroups);
+router.get("/", fetchUserGroups);
+router.post("/", [authorizedGroups(["ADMIN"]), addUserToGroup]);
+router.delete("/", [authorizedGroups(["ADMIN"]), removeUserFromGroup]);
 
 export default router;

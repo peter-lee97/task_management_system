@@ -7,6 +7,7 @@
 	onMount(() => {
 		console.log(`onMount /`);
 		validateAccount();
+		goto('/login');
 	});
 
 	const authSub = authStore.subscribe((value) => {

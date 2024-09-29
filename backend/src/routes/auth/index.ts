@@ -44,10 +44,10 @@ router.get("/validate", validateCookie, async (req, res) => {
 router.post("/login", login);
 router.post("/logout", logout);
 
-router.get("/users", [validateCookie, fetchUsers]);
+router.post("/fetchUsers", [validateCookie, fetchUsers]);
 
 // udpate infomation like credentials
-router.put("/users", [validateCookie, updateCredentials]);
+router.post("/updateUser", [validateCookie, updateCredentials]);
 
 // admin priviledge
 router.use("/admin", [validateCookie, authorizedGroups(["ADMIN"])]);

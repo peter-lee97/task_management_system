@@ -6,7 +6,7 @@
 	import { updateUser } from '../services/api/auth';
 
 	import { validateEmail, validatePassword } from '$lib/validate';
-	import type { UpdateAccount } from '$models';
+	import type { AccountUpdate } from '$models';
 
 	onMount(() => {
 		authStore.subscribe((a) => {
@@ -20,7 +20,7 @@
 	});
 
 	export let showModal: boolean;
-	let accountCopy: UpdateAccount | null;
+	let accountCopy: AccountUpdate | null;
 
 	const dispatch = createEventDispatcher<{
 		notification: { message?: string; errorMessage?: string };

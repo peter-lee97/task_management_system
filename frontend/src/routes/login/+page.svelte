@@ -27,7 +27,6 @@
 	});
 
 	async function loginHandler() {
-		console.log(`username: ${username} | password: ${password}`);
 		if (username == undefined || password == undefined) {
 			console.log(`entries are found empty`);
 			return;

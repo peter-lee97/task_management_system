@@ -40,3 +40,56 @@ export function validateEmail(email: string): string | null {
 	if (!validEmail) return 'Invalid Email Format';
 	return null;
 }
+
+/**
+ * Call to check if application is in the correct format to submit
+ */
+export const validateApplication = (inputs: {
+	appAcronym: string | undefined;
+	rNumber: number | undefined;
+	startDate: string;
+	endDate: string;
+}): string | null => {
+	if (!inputs.startDate || !inputs.endDate) {
+		return 'Start/End Date must be defined';
+	}
+	if (!inputs.appAcronym) {
+		return 'App_Acronym is required';
+	}
+
+	if (!/^[a-zA-Z0-9_]{1,50}$/.test(inputs.appAcronym)) {
+		return 'App_Acronym can only contain 50 characters, alphanumeric or _';
+	}
+
+	if (!inputs.rNumber) return 'App_Rnumber is required';
+	if (inputs.appAcronym.length == 0 || inputs.appAcronym.length > 50) {
+		return 'App_Acronym must be within 1 and 50 characters';
+	}
+
+	if (!inputs.rNumber || inputs.rNumber < 0) {
+		return 'App_Rnumber must be greater than 1';
+	}
+
+	return null;
+};
+
+export const validatePlanName = (name: string): string | null => {
+	if (!name) return 'Plan name cannot be empty';
+	// const regex = /^[a-zA-Z0-9_]{1,255}$/;
+	if (name.length > 0 && name.length < 255) return null;
+	return 'Plan name must be within 1 to 255 characters';
+};
+
+export const validateTaskName = (name: string): string | null => {
+	if (!name) return 'Task name cannot be empty';
+	// const regex = /^[a-zA-Z0-9_]{1,255}$/;
+	if (name.length > 0 && name.length < 255) return null;
+	return 'Task name must be within 1 to 255 characters';
+};
+
+export const validateColor = (colorString: string): string | null => {
+	if (!colorString) return 'color is not selected';
+	const regex = /^#[A-Fa-f0-9]{6}$/;
+	if (!regex.test(colorString)) return 'invalid color format';
+	return null;
+};

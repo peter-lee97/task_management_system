@@ -4,7 +4,8 @@
 
 <div class="banner">
 	<h1>{title}</h1>
-	<slot name="action" />
+	{#if $$slots.action}
+		<slot name="action" />{/if}
 </div>
 
 <style>

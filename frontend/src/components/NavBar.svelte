@@ -13,7 +13,6 @@
 	let currentPageName: string = '';
 
 	const sub = authStore.subscribe((acc) => {
-		console.log(`changes in account: ${acc != null}`);
 		if (acc == null && browser) {
 			goto('/login');
 		}
@@ -54,17 +53,17 @@
 			>
 		{/if}
 	</div>
-	{#if account != null}
-		<button
-			class="system-button profile"
-			on:click={() => {
-				showProfile = !showProfile;
-			}}
-		>
-			Edit Profile
-		</button>
-	{/if}
 	<div>
+		{#if account != null}
+			<button
+				class="system-button profile"
+				on:click={() => {
+					showProfile = !showProfile;
+				}}
+			>
+				Edit Profile
+			</button>
+		{/if}
 		<EditProfileModal
 			bind:showModal={showProfile}
 			on:notification={(event) => {
@@ -88,11 +87,17 @@
 </nav>
 
 <style>
-	nav {
+	:global(body) {
+		/* this will apply to <body> */
+		margin: 0;
+		padding: 0;
+	}
+
+	:global(nav) {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: 20px;
+		padding: 0px 8px;
 		background-color: black;
 		color: whitesmoke;
 	}
@@ -106,7 +111,7 @@
 		font-size: 16px;
 	}
 
-	.system-button {
+	:global(.system-button) {
 		background-color: inherit;
 		border: none;
 		cursor: pointer;

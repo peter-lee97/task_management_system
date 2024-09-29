@@ -6,7 +6,7 @@ import type { UserGroup } from '../../model';
 export const fetchUserGroups = async (username: string): Promise<UserGroup[]> => {
 	console.log('[fetchUserGroups]');
 	try {
-		const response = await baseAPI.get('/user_group', { params: { username } });
+		const response = await baseAPI.post('/user_group/fetchUserGroups', { username });
 		if (response.status != 200) return [];
 		return response.data['result'] as UserGroup[];
 	} catch (error) {
@@ -25,8 +25,9 @@ export const fetchUserGroups = async (username: string): Promise<UserGroup[]> =>
 export const fetchGroups = async (): Promise<string[]> => {
 	console.log('[fetchGroups]');
 	try {
-		const response = await baseAPI.get('/user_group/groups');
+		const response = await baseAPI.get('/user_group/fetchGroups');
 		if (response.status != 200) return [];
+		console.log(`available groups: ${response.data['result']}`);
 		return response.data['result'];
 	} catch (error) {
 		if (error instanceof AxiosError) {
@@ -44,7 +45,7 @@ export const fetchGroups = async (): Promise<string[]> => {
 export const addGroup = async (usergroup: string, username?: string): Promise<UserGroup | null> => {
 	console.log('[addGroup]');
 	try {
-		const response = await baseAPI.post('/user_group', {
+		const response = await baseAPI.post('/user_group/addToGroup', {
 			username,
 			usergroup
 		});
@@ -69,11 +70,9 @@ export const addGroup = async (usergroup: string, username?: string): Promise<Us
 export const removeFromGroup = async (usergroup: string, username: string) => {
 	console.log('[removeFromGroup]');
 	try {
-		await baseAPI.delete('/user_group', {
-			params: {
-				username,
-				usergroup
-			}
+		await baseAPI.post('/user_group/removeFromGroup', {
+			username,
+			usergroup
 		});
 	} catch (error) {
 		if (error instanceof AxiosError) {

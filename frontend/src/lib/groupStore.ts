@@ -6,8 +6,8 @@ const _groupStore = () => {
 	return {
 		...store,
 		// fetch from server
-		fetch: () => {
-			fetchGroups().then((groups) => {
+		fetch: async () => {
+			await fetchGroups().then((groups) => {
 				store.set(groups);
 			});
 		},

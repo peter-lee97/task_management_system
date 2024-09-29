@@ -1,32 +1,36 @@
 <script lang="ts">
+	import { Toaster } from 'svelte-sonner';
+
 	export let showModal: boolean; // boolean
 
 	let dialog: HTMLDialogElement; // HTMLDialogElement
 
 	$: if (dialog && showModal) dialog.showModal();
-	$: if (dialog && !showModal) dialog.close();
+	$: if (dialog && !showModal) {
+		dialog.close();
+	}
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
-<dialog
-	bind:this={dialog}
-	on:close={() => (showModal = false)}
-	on:click|self={() => dialog.close()}
->
-	<!-- svelte-ignore a11y-no-static-element-interactions -->
-	<div on:click|stopPropagation>
-		<slot name="header" />
-		<!-- <hr /> -->
-		<slot />
-		<!-- <hr /> -->
-		<!-- svelte-ignore a11y-autofocus -->
-		<!-- <button autofocus on:click={() => dialog.close()}>close modal</button> -->
-	</div>
-</dialog>
+{#if showModal}
+	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
+	<dialog
+		bind:this={dialog}
+		on:close={() => (showModal = false)}
+		on:click|self={() => dialog.close()}
+	>
+		<Toaster expand={true} richColors={true} />
+		<!-- svelte-ignore a11y-no-static-element-interactions -->
+		<div on:click|stopPropagation>
+			<slot name="header" />
+			<!-- <hr /> -->
+			<slot />
+		</div>
+	</dialog>
+{/if}
 
 <style>
 	dialog {
-		max-width: 32em;
+		/* max-width: 32em; */
 		border-radius: 0.2em;
 		border: none;
 		padding: 0;

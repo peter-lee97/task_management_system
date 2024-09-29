@@ -1,7 +1,7 @@
 import { goto } from '$app/navigation';
 import { baseAPI, unexpectedErrorMsg } from '$lib';
 import { logoutAccount } from '$lib/authStore';
-import type { Account, UpdateAccount } from '$models';
+import type { Account, AccountUpdate } from '$models';
 import { AxiosError } from 'axios';
 
 export const login = async (username: string, password: string): Promise<Account> => {
@@ -49,10 +49,8 @@ export const logout = () => {
 export const fetchUser = async (username?: string): Promise<Account | null> => {
 	console.log('[fetchUser]');
 	try {
-		const response = await baseAPI.get('/auth/users', {
-			params: {
-				username
-			}
+		const response = await baseAPI.post('/auth/fetchUsers', {
+			username
 		});
 		return response.data['result'];
 	} catch (error) {
@@ -93,7 +91,7 @@ export const validateUser = async (): Promise<[Account | null, boolean]> => {
 export const fetchAllUsers = async (): Promise<Account[]> => {
 	console.log('[fetchAllUsers]');
 	try {
-		const response = await baseAPI.get('/auth/users');
+		const response = await baseAPI.post('/auth/fetchUsers');
 		if (response.status != 200) return [];
 		return response.data['result'];
 	} catch (error) {
@@ -109,11 +107,9 @@ export const fetchAllUsers = async (): Promise<Account[]> => {
 	}
 };
 
-export const updateUser = async (account: UpdateAccount): Promise<Account | null> => {
+export const updateUser = async (account: AccountUpdate): Promise<Account | null> => {
 	try {
-		const response = await baseAPI.put('/auth/users', account, {
-			params: { username: account.username }
-		});
+		const response = await baseAPI.post('/auth/updateUser', account);
 
 		if (response.status != 200) return null;
 		return response.data['result'];

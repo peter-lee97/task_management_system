@@ -1,5 +1,5 @@
-import type { Account, UpdateAccount } from '$models';
-import { logout, validateUser } from '$services';
+import type { Account, AccountUpdate, UserGroup } from '$models';
+import { fetchUserGroups, logout, validateUser } from '$services';
 import { get, readable, writable } from 'svelte/store';
 
 export const authStore = writable<Account | null>();
@@ -12,7 +12,6 @@ export const isAdminReadable = readable(false, (set) => {
 	const sub = isAdminWritable.subscribe((change) => {
 		set(change);
 	});
-
 	return () => {
 		// Cleanup if necessary
 		sub();
@@ -28,7 +27,7 @@ export const setAccount = (account: Account | null) => {
  * @param update
  * @returns
  */
-export const checkAccountChange = (update: UpdateAccount): boolean => {
+export const checkAccountChange = (update: AccountUpdate): boolean => {
 	const current = get(authStore);
 	if (current?.email !== update.email) return false;
 	if (update.password !== null && update.password !== undefined) return false;
@@ -45,3 +44,18 @@ export const logoutAccount = () => {
 	logout();
 	setAccount(null);
 };
+
+export const userGroupStore = readable(new Array<UserGroup>(0), (set) => {
+	const sub = authStore.subscribe((auth) => {
+		if (!auth) {
+			set([]);
+		} else {
+			fetchUserGroups(auth.username).then((result) => {
+				set(result);
+			});
+		}
+	});
+	return () => {
+		sub();
+	};
+});

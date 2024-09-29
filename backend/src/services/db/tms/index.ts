@@ -57,6 +57,31 @@ export const fetchAllApplications = async (
   }
 };
 
+export const fetchApplicationsBygroup = async (
+  db: Connection,
+  username: string
+): Promise<Application[]> => {
+  const sql = `
+  SELECT DISTINCT A.*
+  FROM
+    Application A
+  JOIN UserGroup U
+    ON U.user_group = A.App_permit_Create
+      OR U.user_group = A.App_permit_Open
+      OR U.user_group = A.App_permit_toDoList
+      OR U.user_group = A.App_permit_Doing
+      OR U.user_group = A.App_permit_Done
+  WHERE U.username = ?;
+  `;
+  const values = [username];
+  try {
+    const [result] = await db.query<Application[]>(sql, values);
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const createApplication = async (
   db: Connection,
   app: Application
@@ -79,7 +104,7 @@ export const createApplication = async (
     `;
   const values = [
     app.App_Acronym,
-    app.App_Description,
+    app.App_Description ?? null,
     app.App_Rnumber,
     app.App_startDate,
     app.App_endDate,
@@ -292,8 +317,7 @@ export const updateTask = async (
   values.push(task.Task_id);
 
   try {
-    const [result] = await db.execute<ResultSetHeader>(sql, values);
-    if (result.affectedRows > 0) console.log("task updated: ", task.Task_id);
+    await db.execute<ResultSetHeader>(sql, values);
   } catch (error) {
     throw error;
   }

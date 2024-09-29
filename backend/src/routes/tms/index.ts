@@ -1,13 +1,13 @@
 import { Router } from "express";
 import {
-  checkActions,
   createApp,
   createPlan,
   createTask,
-  fetchAllApplications,
+  fetchActions,
   fetchAllTasks,
-  fetchApplication,
+  fetchApplications,
   fetchPlans,
+  fetchUserApplications,
   updateApplication,
   updateTask,
 } from "../../controllers/tms";
@@ -19,32 +19,30 @@ const router = Router();
 router.use([validateCookie]);
 
 //* Application
-router.get("/applications", [authorizedGroups(["PL"]), fetchAllApplications]);
-router.get("/:appAcronym/actions", [belongsInApplication, checkActions]);
-router.get("/applications/:appAcronym", [
-  belongsInApplication,
-  fetchApplication,
+router.post("/fetchApplications", [
+  authorizedGroups(["PL"]),
+  fetchApplications,
 ]);
-router.post("/applications", [authorizedGroups(["PL"]), createApp]);
-router.put("/applications", [authorizedGroups(["PL"]), updateApplication]);
+router.get("/fetchUserApplications", fetchUserApplications);
+router.post("/fetchActions", fetchActions);
+router.post("/createApplication", [authorizedGroups(["PL"]), createApp]);
+router.post("/updateApplication", [
+  authorizedGroups(["PL"]),
+  updateApplication,
+]);
 
 //* Plan
-router.get("/:appAcronym/plans", [belongsInApplication, fetchPlans]);
-
-router.post("/:appAcronym/plans", [
+router.post("/fetchPlans", [belongsInApplication, fetchPlans]);
+router.post("/createPlan", [
   authorizedGroups(["PM"]),
   belongsInApplication,
   createPlan,
 ]);
 
 //* Task
-router.get("/:appAcronym/tasks", [belongsInApplication, fetchAllTasks]);
-router.post("/:appAcronym/tasks", [
-  authorizedGroups(["PL"]),
-  belongsInApplication,
-  createTask,
-]);
-router.put("/:appAcronym/tasks", [
+router.post("/fetchTasks", [belongsInApplication, fetchAllTasks]);
+router.post("/createTask", [belongsInApplication, createTask]);
+router.post("/updateTask", [
   belongsInApplication,
   validateTaskChange,
   updateTask,

@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { Account } from "../../model";
 import { AccountDB, getDb, UserGroupDB } from "../../services/db";
 
@@ -79,11 +79,7 @@ export const logout = async (req: Request, res: Response) => {
     .send({ message: "Signed out successfully" });
 };
 
-export const register = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const register = async (req: Request, res: Response) => {
   console.log("[register]");
   const { username, password, email, accountStatus } = req.body;
   if (!username || !password) {
@@ -143,24 +139,22 @@ export const updateCredentials = async (
     return;
   }
 
-  const username = req.query["username"] as string | null;
+  const { username, accountStatus, email, password } = req.body;
 
-  if (!username) {
-    res.status(400).json({ message: "missing username query param" });
-    return;
-  }
   if (username == "admin") {
-    res.status(400).json({ message: "admin account cannot be updated" });
+    res.status(400).json({ message: "hardcoded admin cannot be edited" });
     return;
   }
-
-  const { accountStatus, email, password } = req.body;
 
   const isAdmin = await UserGroupDB.Checkgroup(payload.username, "ADMIN");
 
-  if (payload.username !== username && !isAdmin) {
-    res.status(401).json({ message: "Unauthorized to access route" });
-    return;
+  console.log(`payload: ${payload.username} | ${username}`);
+
+  if (!isAdmin) {
+    if (payload.username !== username) {
+      res.status(401).json({ message: "Unauthorized to access route" });
+      return;
+    }
   }
 
   if (!isAdmin && accountStatus) {
@@ -206,13 +200,36 @@ export const fetchUsers = async (
 ): Promise<void> => {
   const db = getDb();
   console.log("[fetchUsers]");
-  if (req.query["username"] != null) {
-    console.log("[fetch user]:", req.query["username"]);
-    const username = req.query["username"] as string;
+  const { username } = req.body;
+
+  const token = req.cookies.token;
+  if (!token) {
+    res.status(401).json({ message: "Unauthorized to access route" });
+    return;
+  }
+  const payload = verifyToken(token, process.env.ENV_SECRET as string);
+  if (!payload) {
+    res.status(401).json({ message: "Unauthorized to access route" });
+    return;
+  }
+
+  const isAdmin = await UserGroupDB.Checkgroup(payload.username, "admin");
+
+  if (username) {
+    if (!isAdmin && payload.username != username) {
+      res.status(403).json({ message: "Unauthorized to access resource" });
+      return;
+    }
     const account = await AccountDB.fetchUser(db, username);
     res.status(200).send({ message: "success", result: account });
     return;
   }
+
+  if (!isAdmin) {
+    res.status(403).json({ message: "Unauthorized to access resource" });
+    return;
+  }
+
   const accounts = await AccountDB.fetchAllUsers(db);
   console.log(`accounts: ${accounts.length}`);
   res.status(200).send({ message: "success", result: accounts });

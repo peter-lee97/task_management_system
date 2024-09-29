@@ -1,12 +1,31 @@
 import { Request, Response } from "express";
 import { getDb, UserGroupDB } from "../../services/db";
+import { verifyToken } from "../../services/jwt";
 
 // Use fetch all usergroup rows with username
 export const fetchUserGroups = async (req: Request, res: Response) => {
+  const token = req.cookies.token;
+  if (!token) {
+    res.status(401).json({ message: "Unauthorized to access route" });
+    return;
+  }
+  const payload = verifyToken(token, process.env.ENV_SECRET as string);
+  if (!payload) {
+    res.status(401).json({ message: "Unauthorized to access route" });
+    return;
+  }
   const db = getDb();
-  const { username } = req.query;
+  const { username } = req.body;
   if (!username) {
-    res.status(400).send({ message: "Username query params cannot be empty" });
+    res.status(400).send({ message: "username field not found" });
+    return;
+  }
+
+  if (
+    !(await UserGroupDB.Checkgroup(payload.username, "admin")) &&
+    username != payload.username
+  ) {
+    res.status(403).json({ message: "Unauthorized to access resource" });
     return;
   }
 
@@ -51,10 +70,8 @@ export const fetchGroups = async (req: Request, res: Response) => {
 
 export const removeUserFromGroup = async (req: Request, res: Response) => {
   console.log("[removeUserFromGroup]");
-  const username = req.query["username"] as string;
-  const usergroup = req.query["usergroup"] as string;
 
-  // const { usergroups } = req.body;
+  const { username, usergroup } = req.body;
 
   if (!username || !usergroup) {
     res.status(400).send({ message: "username and usergroup fields required" });

@@ -18,9 +18,9 @@ export const belongsInApplication = async (
   res: Response,
   next: NextFunction
 ) => {
-  const appAcronym = req.params["appAcronym"];
+  const { appAcronym } = req.body;
   if (!appAcronym) {
-    res.status(400).json({ message: "appAcronym field not found" });
+    res.status(400).json({ message: "appAcronym key missing in req.body" });
     return;
   }
 
@@ -132,9 +132,8 @@ export const validateTaskChange = async (
 
   //- same state transition
   if (existingTask.Task_state == newTask.Task_state) {
-    console.log(`checking for same state change`);
     let inGroup = false;
-    let errorMessage = "Failed to update task";
+    let errorMessage = "invalid task transition";
 
     switch (newTask.Task_state) {
       case Task_State.OPEN:

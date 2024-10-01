@@ -12,9 +12,8 @@
 	import type { Application, Plan, Task } from '$models';
 	import KanbanCard from './KanbanCard.svelte';
 	import PlanCard from './PlanCard.svelte';
-	import { toast } from 'svelte-sonner';
 	import { writable } from 'svelte/store';
-	import TaskCard from './TaskCard.svelte';
+	import TaskModal from './TaskModal.svelte';
 
 	let canCreatePlan = false;
 	let canCreateTask = false;
@@ -30,13 +29,27 @@
 		if (!showTaskModal) currentTask = undefined;
 	}
 
+	writableTasks.subscribe((e) => {
+		console.log(`change in tasks`);
+		e.map((e) => `${e.Task_name} | ${e.Task_plan}`).forEach((e) => console.log(e));
+	});
+
+	userActionStore.subscribe((actions) => {
+		console.log(`actions: ${actions}`);
+	});
+
+	$: openTasks = $writableTasks.filter((t) => t.Task_state == Task_State.OPEN);
+	$: todoTasks = $writableTasks.filter((t) => t.Task_state == Task_State.TODO);
+	$: doingTasks = $writableTasks.filter((t) => t.Task_state == Task_State.DOING);
+	$: doneTasks = $writableTasks.filter((t) => t.Task_state == Task_State.DONE);
+	$: closeTasks = $writableTasks.filter((t) => t.Task_state == Task_State.CLOSE);
+
 	setContext(Context_Key.PLAN, writablePlans);
 	setContext(Context_Key.ACTIONS, userActionStore);
 	setContext(Context_Key.TASK, writableTasks);
 
 	const userActionsSub = userActionStore.subscribe((values) => {
 		if (!values) return;
-		console.log(`actions: ${values}`);
 		canCreatePlan = values.includes(Permit_Enum.CREATE_PLAN);
 		canCreateTask = values.includes(Permit_Enum.CREATE_TASK);
 	});
@@ -73,10 +86,6 @@
 		showTaskModal = !showTaskModal;
 		currentTask = task;
 	};
-	const getTaskColor = (planname: string | null): string | null => {
-		if (planname == null) return null;
-		return $writablePlans[planname]?.Plan_color ?? null;
-	};
 </script>
 
 <ManagementBanner title="Task Management Board">
@@ -90,13 +99,16 @@
 </ManagementBanner>
 
 {#if showTaskModal && currentTask}
-	<TaskCard
+	<TaskModal
 		on:notification={(event) => {
 			const updatedTask = event.detail.updateTask;
 			if (!updatedTask) return;
+
+			console.log(`updated task plan: ${updatedTask.Task_plan}`);
+
 			writableTasks.update((tasks) => {
-				const newTasks = tasks.filter((t) => t.Task_id != updatedTask.Task_id);
-				return [...newTasks, updatedTask];
+				const newTasks = tasks.filter((t) => t.Task_id !== updatedTask.Task_id);
+				return [updatedTask, ...newTasks];
 			});
 		}}
 		bind:showModal={showTaskModal}
@@ -117,8 +129,8 @@
 			{/if}
 		</div>
 		<div class="kanban-builder">
-			{#each $writableTasks.filter((task) => task.Task_state == Task_State.OPEN) as t}
-				<KanbanCard task={t} color={getTaskColor(t.Task_plan)} onTap={() => editTaskHandler(t)} />
+			{#each openTasks as t (t.Task_name + t.Task_id + t.Task_plan + t.Task_createDate)}
+				<KanbanCard task={t} onTap={() => editTaskHandler(t)} />
 			{/each}
 		</div>
 	</div>
@@ -126,10 +138,9 @@
 	<div class="grid-item">
 		<div class="grid-title">To do</div>
 		<div class="kanban-builder">
-			{#each $writableTasks.filter((task) => task.Task_state == Task_State.TODO) as t}
+			{#each todoTasks as t (t.Task_name + t.Task_id + t.Task_plan + t.Task_createDate)}
 				<KanbanCard
 					task={t}
-					color={getTaskColor(t.Task_plan)}
 					onTap={() => {
 						editTaskHandler(t);
 					}}
@@ -140,10 +151,9 @@
 	<div class="grid-item">
 		<div class="grid-title">Doing</div>
 		<div class="kanban-builder">
-			{#each $writableTasks.filter((task) => task.Task_state == Task_State.DOING) as t}
+			{#each doingTasks as t (t.Task_name + t.Task_id + t.Task_plan + t.Task_createDate)}
 				<KanbanCard
 					task={t}
-					color={getTaskColor(t.Task_plan)}
 					onTap={() => {
 						editTaskHandler(t);
 					}}
@@ -154,10 +164,9 @@
 	<div class="grid-item">
 		<div class="grid-title">Done</div>
 		<div class="kanban-builder">
-			{#each $writableTasks.filter((task) => task.Task_state == Task_State.DONE) as t}
+			{#each doneTasks as t (t.Task_name + t.Task_id + t.Task_plan + t.Task_createDate)}
 				<KanbanCard
 					task={t}
-					color={getTaskColor(t.Task_plan)}
 					onTap={() => {
 						editTaskHandler(t);
 					}}
@@ -168,10 +177,9 @@
 	<div class="grid-item">
 		<div class="grid-title">Closed</div>
 		<div class="kanban-builder">
-			{#each $writableTasks.filter((task) => task.Task_state == Task_State.CLOSE) as t}
+			{#each closeTasks as t (t.Task_name + t.Task_id + t.Task_plan + t.Task_createDate)}
 				<KanbanCard
 					task={t}
-					color={getTaskColor(t.Task_plan)}
 					onTap={() => {
 						editTaskHandler(t);
 					}}
@@ -182,7 +190,7 @@
 </div>
 
 {#if showCreateTaskModal}
-	<TaskCard
+	<TaskModal
 		showModal={showCreateTaskModal}
 		{currentApp}
 		on:notification={(event) => {

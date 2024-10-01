@@ -1,14 +1,20 @@
 <script lang="ts">
-	import type { Task } from '$models';
-	import { onMount } from 'svelte';
+	import type { Plan, Task } from '$models';
+	import { Context_Key } from '$services';
+	import { getContext, onMount } from 'svelte';
+	import { type Readable } from 'svelte/store';
 	export let task: Task;
-	export let color: string | null = 'inherit';
 	export let onTap: () => void | undefined;
 
+	const planStore = getContext<Readable<Record<string, Plan>>>(Context_Key.PLAN);
+
 	onMount(() => {
-		if (color) {
+		if (task.Task_plan) {
+			const plan = $planStore[task.Task_plan];
+			if (!plan || !plan.Plan_color) return;
 			const canvasCard = document.getElementById(task.Task_id);
-			canvasCard!.style.borderLeft = `4px solid ${color}`;
+			canvasCard!.style.borderLeft = `4px solid ${plan.Plan_color}`;
+			console.log(`plan color: ${plan.Plan_color}`);
 		}
 	});
 </script>

@@ -48,22 +48,25 @@
 		}
 	}
 
-	if (selectedTaskId) {
-		writableTasks.subscribe((e) => {
-			const index = $writableTasks.findIndex((e) => e.Task_id == selectedTaskId);
-			if (index == -1) {
-				console.log('index not found');
-				return;
-			}
-			task = e[index];
-			newTaskPlan = task.Task_plan;
-			newTaskState = task.Task_state;
-		});
+	$: {
+		console.log(`current selected plan: ${newTaskPlan}`);
 	}
 
 	onMount(() => {
 		const p = get(writablePlans);
 		availablePlans = Object.entries(p).map((e) => e[0]);
+		if (selectedTaskId) {
+			writableTasks.subscribe((e) => {
+				const index = $writableTasks.findIndex((e) => e.Task_id == selectedTaskId);
+				if (index == -1) {
+					console.log('index not found');
+					return;
+				}
+				task = e[index];
+				newTaskPlan = task.Task_plan;
+				newTaskState = task.Task_state;
+			});
+		}
 	});
 
 	const updateHandler = () => {
@@ -77,7 +80,12 @@
 		};
 
 		// only concern about plan and notes
-		if (!taskUpdate.Task_plan && !newTaskNotes && task.Task_state == newTaskState) {
+		if (
+			!taskUpdate.Task_plan &&
+			!newTaskNotes &&
+			task.Task_state == newTaskState &&
+			task.Task_plan == newTaskPlan
+		) {
 			toast.info('no changes in task');
 			return;
 		}
@@ -135,6 +143,11 @@
 
 	const clearFields = () => {
 		if (newTaskNotes) newTaskNotes = null;
+		if (!task) {
+			newTaskName = '';
+			newTaskDescription = null;
+			newTaskPlan = null;
+		}
 	};
 </script>
 
@@ -159,7 +172,7 @@
 						{#if task}
 							{task.Task_id}
 						{:else}
-							<span class="hint">Task not created yet</span>
+							<span class="hint">--Generated After Creation--</span>
 						{/if}
 					</div>
 				</div>
@@ -181,7 +194,7 @@
 						{/if}
 						{#if !task}
 							<textarea
-								style="width: 100% resize:none;"
+								style="width: 100%"
 								placeholder={'insert description here'}
 								bind:value={newTaskDescription}
 								rows="6"
@@ -197,25 +210,25 @@
 							<select bind:value={newTaskPlan} style="width: 100%">
 								<option value={null} selected disabled>select plan</option>
 								{#each availablePlans as p}
-									<option value={p}>{p}</option>
+									<option value={p}>{p} </option>
 								{/each}
 							</select>
 						{/if}
 						<!-- *OPEN -->
 						{#if task && task.Task_state == Task_State.OPEN}
-							{#if $actions.includes(Permit_Enum.CREATE_TASK)}
+							{#if $actions.includes(Permit_Enum.OPEN)}
 								<select bind:value={newTaskPlan}>
 									{#if task.Task_plan}
 										<option value={task.Task_plan} disabled>
 											{task.Task_plan}
 										</option>
 									{/if}
-									{#each availablePlans.filter((e) => e !== task?.Task_plan) as p}
+									<option value={null}> </option>
+									{#each availablePlans.filter((e) => e != task?.Task_plan) as p}
 										<option value={p}>
 											{p}
 										</option>
 									{/each}
-									<option value={null}> </option>
 								</select>
 							{/if}
 						{/if}
@@ -227,12 +240,33 @@
 								<div class="hint">-</div>
 							{/if}
 						{/if}
+						{#if task && task.Task_state == Task_State.DONE}
+							{#if $actions.includes(Permit_Enum.DONE)}
+								<select bind:value={newTaskPlan}>
+									{#if task.Task_plan}
+										<option value={task.Task_plan} disabled>
+											{task.Task_plan}
+										</option>
+									{/if}
+									<option value={null}> </option>
+									{#each availablePlans.filter((e) => e != task?.Task_plan) as p}
+										<option value={p}>
+											{p}
+										</option>
+									{/each}
+								</select>
+							{/if}
+						{/if}
 					</div>
 				</div>
 				<div class="entry-row">
 					<div class="left-container">Task State</div>
 					<div class="right-container">
-						{newTaskState}
+						{#if newTaskState}
+							{newTaskState}
+						{:else}
+							<span class="hint"> - </span>
+						{/if}
 					</div>
 				</div>
 				<div class="entry-row">
@@ -326,6 +360,7 @@
 							newTaskState = Task_State.CLOSE;
 							updateHandler();
 						}}
+						disabled={task.Task_plan != newTaskPlan}
 					>
 						Approve Task
 					</button>
@@ -341,10 +376,11 @@
 				{/if}
 			{/if}
 
-			<button on:click={updateHandler} disabled={task?.Task_state == Task_State.CLOSE}>
-				Save Changes
-			</button>
-
+			{#if task}
+				<button on:click={updateHandler} disabled={task?.Task_state == Task_State.CLOSE}>
+					Save Changes
+				</button>
+			{/if}
 			<button
 				on:click={() => {
 					showModal = false;
@@ -362,7 +398,7 @@
 		display: flex;
 		height: 6em;
 	}
-	.task-notes-input textarea {
+	textarea {
 		resize: none;
 		flex: 1;
 	}
@@ -374,7 +410,8 @@
 	}
 	.multiline-container {
 		overflow-y: auto;
-		min-height: 6em;
+		height: 6em;
+		width: 100%;
 		background-color: whitesmoke;
 	}
 	.task-banner {
@@ -428,6 +465,7 @@
 	}
 	.right-container {
 		flex: 7;
+		display: flex;
 	}
 	.hint {
 		font-size: 12;

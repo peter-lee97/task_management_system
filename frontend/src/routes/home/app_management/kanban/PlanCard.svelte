@@ -2,9 +2,12 @@
 	import Modal from '$components/Modal.svelte';
 	import { logoutAccount } from '$lib/authStore';
 	import { validateColor, validatePlanName } from '$lib/validate';
-	import { addDays, createPlan, fromDateString } from '$services';
+	import type { Plan } from '$models';
+	import { addDays, Context_Key, createPlan, fromDateString } from '$services';
 	import { AxiosError } from 'axios';
+	import { getContext } from 'svelte';
 	import { toast } from 'svelte-sonner';
+	import { type Writable } from 'svelte/store';
 
 	export let appAcronym: string;
 	export let showModal: boolean;
@@ -13,6 +16,8 @@
 	let startDateString = startDate.toISOString().substring(0, 10);
 	let endDateString = addDays(startDate, 14).toISOString().substring(0, 10);
 	let planColor: string;
+
+	const planStore = getContext<Writable<Record<string, Plan>>>(Context_Key.PLAN);
 
 	const submitHandler = async () => {
 		console.log(`submit handler`);
@@ -38,6 +43,14 @@
 				if (newPlan == null) {
 					toast.error('failed to create plan');
 				} else if (newPlan) {
+					if (newPlan) {
+						planStore.update((plans) => {
+							plans[newPlan.Plan_MVP_name] = newPlan;
+							const copyPlans = { ...plans };
+							copyPlans[newPlan.Plan_MVP_name] = newPlan;
+							return copyPlans;
+						});
+					}
 					toast.success(`New plan (${newPlan?.Plan_app_Acronym}) created`);
 					planName = '';
 					planColor = '';

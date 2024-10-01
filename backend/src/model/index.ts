@@ -1,5 +1,4 @@
 import { RowDataPacket } from "mysql2/promise";
-import { Task_State } from "../constants";
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -166,3 +165,23 @@ export const isTaskValid = (object: any): string | null => {
   }
   return null;
 };
+
+export enum Task_State {
+  OPEN = "open",
+  TODO = "todo",
+  DOING = "doing",
+  DONE = "done",
+  CLOSE = "close",
+}
+
+export enum Permits {
+  CREATE_TASK = "createtask",
+  CREATE_APP = "createapp",
+  CREATE_PLAN = "createplan",
+  ADD_NOTES = "addnotes",
+  OPEN = "open",
+  TODO = "todo",
+  DOING = "doing",
+  DONE = "done",
+  CLOSE = "close",
+}

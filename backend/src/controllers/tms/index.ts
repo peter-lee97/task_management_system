@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
-import { Permits as Permit_Enum, Task_State } from "../../constants";
 import {
   isPlanValid,
   isTaskValid,
+  Permits,
+  Task_State,
   TaskInsert,
   TaskUpdate,
   type Application,
@@ -12,10 +13,7 @@ import {
 } from "../../model";
 import { getDb, TMSDB, UserGroupDB } from "../../services/db";
 import { fetchUser } from "../../services/db/account";
-import {
-  fetchApplication,
-  fetchApplicationsBygroup,
-} from "../../services/db/tms";
+import { fetchAllApplications, fetchApplication } from "../../services/db/tms";
 import { fetchByGroupname } from "../../services/db/user_group";
 import { verifyToken } from "../../services/jwt";
 import { getTransporter, sendMail } from "../../services/nodemailer";
@@ -25,7 +23,6 @@ export const createApp = async (req: Request, res: Response): Promise<void> => {
 
   const db = getDb();
   const newApp: Application = req.body;
-  console.log(`newApp: ${JSON.stringify(newApp)}`);
 
   if (!newApp) {
     res
@@ -77,11 +74,10 @@ export const updateApplication = async (req: Request, res: Response) => {
     return;
   }
 
-  console.log(`from res body: ${JSON.stringify(newAppUpdate)}`);
-
   try {
     await TMSDB.updateApplication(db, {
       ...existingApplication,
+
       App_Rnumber:
         newAppUpdate.App_Rnumber !== undefined
           ? newAppUpdate.App_Rnumber
@@ -98,6 +94,10 @@ export const updateApplication = async (req: Request, res: Response) => {
         newAppUpdate.App_Description !== undefined
           ? newAppUpdate.App_Description
           : existingApplication.App_Description,
+      App_permit_Create:
+        newAppUpdate.App_permit_Create !== undefined
+          ? newAppUpdate.App_permit_Create
+          : existingApplication.App_permit_Create,
       App_permit_Open:
         newAppUpdate.App_permit_Open !== undefined
           ? newAppUpdate.App_permit_Open
@@ -140,8 +140,7 @@ export const fetchUserApplications = async (req: Request, res: Response) => {
   }
   const db = getDb();
   try {
-    const apps = await fetchApplicationsBygroup(db, payload.username);
-    apps.map((e) => console.log(`app name: ${e.App_Acronym}`));
+    const apps = await fetchAllApplications(db);
     return res.status(200).json({ message: "success", result: apps });
   } catch (error) {
     console.error(error);
@@ -168,7 +167,6 @@ export const fetchApplications = async (
     return;
   }
   console.log(`[fetchAllApplications]`);
-
   try {
     const apps = await TMSDB.fetchAllApplications(db);
     res.status(200).json({ message: "successful", result: apps });
@@ -376,7 +374,18 @@ export const createTask = async (req: Request, res: Response) => {
   }
   // TODO: think about the commit and rollback for create task and update app
   try {
-    await TMSDB.createTask(db, insertTask);
+    const systemNotes = generateSystemNotes({
+      username: insertTask.Task_creator,
+      currentState: insertTask.Task_state,
+    });
+
+    await TMSDB.createTask(db, {
+      ...insertTask,
+      Task_notes:
+        insertTask.Task_notes != null
+          ? (insertTask.Task_notes += `\n${systemNotes}\n`)
+          : `${systemNotes}\n`,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "failed to create task" });
@@ -432,18 +441,50 @@ export const updateTask = async (req: Request, res: Response) => {
     return;
   }
 
+  if (existingTask.Task_state == Task_State.DONE) {
+    if (updateTask.Task_plan && updateTask.Task_state == Task_State.DONE) {
+      res.status(400).json({
+        message:
+          "Use 'Reject Task' instead of 'Save Changes' when plan is updated",
+      });
+      return;
+    }
+  }
+
+  // change in task plan,
+  if (updateTask.Task_plan != undefined) {
+    if (
+      existingTask.Task_state == Task_State.DONE &&
+      updateTask.Task_state == Task_State.CLOSE
+    ) {
+      res.status(400).json({
+        message:
+          "Use 'Reject Task' instead of 'Save Changes' when plan is updated",
+      });
+      return;
+    }
+  }
+
   let existingNotes = existingTask.Task_notes ?? "";
 
   if (updateTask.Task_notes != undefined && updateTask.Task_notes != null) {
-    existingNotes += `\n${updateTask.Task_notes}\n`;
-
     // generate system notes
     const systemNotes = generateSystemNotes({
       username: payload.username,
       currentState: existingTask.Task_state,
     });
-
-    existingNotes += systemNotes;
+    existingNotes =
+      `${updateTask.Task_notes}\n` + `${systemNotes}\n` + existingNotes;
+  } else if (
+    !updateTask.Task_notes &&
+    updateTask.Task_state != existingTask.Task_state
+  ) {
+    // only state change
+    existingNotes =
+      `${generateSystemNotes({
+        username: payload.username,
+        currentState: updateTask.Task_state,
+      })}\n` + existingNotes;
   }
 
   try {
@@ -453,7 +494,6 @@ export const updateTask = async (req: Request, res: Response) => {
       Task_owner: payload.username, // TODO: special case for reject
     };
     await TMSDB.updateTask(db, _updateTask);
-
     const updatedTask = await TMSDB.fetchTask(db, updateTask.Task_id);
     if (updatedTask && updatedTask.Task_state == Task_State.DONE) {
       // notify groups in done
@@ -488,7 +528,8 @@ export const updateTask = async (req: Request, res: Response) => {
             username: "tms service",
           },
           `[${app.App_Acronym}] Task Completion`,
-          `${updatedTask.Task_owner} has completed task ${updatedTask.Task_id}`
+          `Dear PLs,  \n${updatedTask.Task_owner} has completed task ${updatedTask.Task_id}.\n\n-- This is a system generated email. DO NOT REPLY --\nRegards, \nTMS service
+          `
         );
       });
     }
@@ -530,41 +571,41 @@ export const fetchActions = async (req: Request, res: Response) => {
       app.App_permit_Create &&
       (await UserGroupDB.Checkgroup(payload.username, app.App_permit_Create))
     ) {
-      actions.add(Permit_Enum.CREATE_TASK);
+      actions.add(Permits.CREATE_TASK);
     }
     if (
       app.App_permit_Open &&
       (await UserGroupDB.Checkgroup(payload.username, app.App_permit_Open))
     ) {
-      actions.add(Permit_Enum.OPEN);
+      actions.add(Permits.OPEN);
     }
     if (
       app.App_permit_toDoList &&
       (await UserGroupDB.Checkgroup(payload.username, app.App_permit_toDoList))
     ) {
-      actions.add(Permit_Enum.TODO);
+      actions.add(Permits.TODO);
     }
 
     if (
       app.App_permit_Doing &&
       (await UserGroupDB.Checkgroup(payload.username, app.App_permit_Doing))
     ) {
-      actions.add(Permit_Enum.DOING);
+      actions.add(Permits.DOING);
     }
 
     if (
       app.App_permit_Done &&
       (await UserGroupDB.Checkgroup(payload.username, app.App_permit_Done))
     ) {
-      actions.add(Permit_Enum.DONE);
+      actions.add(Permits.DONE);
     }
   }
 
   if (await UserGroupDB.Checkgroup(payload.username, "PL")) {
-    actions.add(Permit_Enum.CREATE_APP);
+    actions.add(Permits.CREATE_APP);
   }
   if (await UserGroupDB.Checkgroup(payload.username, "PM")) {
-    actions.add(Permit_Enum.CREATE_PLAN);
+    actions.add(Permits.CREATE_PLAN);
   }
 
   res.status(200).json({

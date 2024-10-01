@@ -32,15 +32,11 @@ router.post("/updateApplication", [
 ]);
 
 //* Plan
-router.post("/fetchPlans", [belongsInApplication, fetchPlans]);
-router.post("/createPlan", [
-  authorizedGroups(["PM"]),
-  belongsInApplication,
-  createPlan,
-]);
+router.post("/fetchPlans", fetchPlans);
+router.post("/createPlan", [authorizedGroups(["PM"]), createPlan]);
 
 //* Task
-router.post("/fetchTasks", [belongsInApplication, fetchAllTasks]);
+router.post("/fetchTasks", fetchAllTasks);
 router.post("/createTask", [belongsInApplication, createTask]);
 router.post("/updateTask", [
   belongsInApplication,

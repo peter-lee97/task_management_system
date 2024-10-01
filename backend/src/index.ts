@@ -38,7 +38,6 @@ const init = async () => {
       `);
   });
 
-  // Handlers
   app.use("/api/v1/auth", auth);
   app.use("/api/v1/user_group", usergroup);
   app.use("/api/v1/tms", tms);

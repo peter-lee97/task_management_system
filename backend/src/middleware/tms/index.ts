@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import { Task_State } from "../../constants";
-import { Task } from "../../model";
+
+import { Task, Task_State } from "../../model";
 import { getDb, TMSDB, UserGroupDB } from "../../services/db";
 import { verifyToken } from "../../services/jwt";
 
@@ -162,13 +162,17 @@ export const validateTaskChange = async (
           : inGroup;
         break;
       case Task_State.DONE:
-        inGroup = await UserGroupDB.Checkgroup(payload.username, tmsApp.DOING);
+        inGroup = tmsApp.App_permit_Done
+          ? await UserGroupDB.Checkgroup(
+              payload.username,
+              tmsApp.App_permit_Done
+            )
+          : inGroup;
         break;
       case Task_State.CLOSE:
         inGroup = false;
         errorMessage = "Closed task cannot be updated";
         break;
-
       default:
         break;
     }

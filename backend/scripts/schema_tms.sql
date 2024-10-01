@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS `Plan`(
   -- Includes #
   `Plan_color` VARCHAR(7),
   FOREIGN KEY (`Plan_app_Acronym`) REFERENCES Application(`App_Acronym`) ON DELETE CASCADE,
-  PRIMARY KEY (`Plan_MVP_name`)
+  PRIMARY KEY (`Plan_MVP_name`, `Plan_app_Acronym`)
 ) ENGINE = INNODB DEFAULT CHARSET = UTF8;
 
 CREATE TABLE IF NOT EXISTS `Task` (

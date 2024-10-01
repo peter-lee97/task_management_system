@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { Account } from "../../model";
+import type { Account } from "../../model";
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
@@ -16,7 +16,6 @@ export const sendMail = (
 ): void => {
   if (receivers.length == 0) return;
   const tos = receivers.map((e) => `${e.username} <${e.email}>`).join(", ");
-  console.log(`tos: ${tos}`);
   transporter
     .sendMail({
       to: tos,

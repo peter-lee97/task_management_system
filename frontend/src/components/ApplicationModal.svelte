@@ -121,11 +121,16 @@
 				App_permit_Done: appPermitDone
 			};
 
-			applicationStore.create(newApp).then(() => {
-				dispatch('notification', { message: `${appAcronym} created successfully` });
-				clearFields();
-				showModal = false;
-			});
+			applicationStore
+				.create(newApp)
+				.then(() => {
+					dispatch('notification', { message: `${appAcronym} created successfully` });
+					clearFields();
+					showModal = false;
+				})
+				.catch((e) => {
+					console.error(e);
+				});
 		}
 	}
 </script>

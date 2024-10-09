@@ -33,7 +33,7 @@ export enum Task_State {
 	TODO = 'todo',
 	DOING = 'doing',
 	DONE = 'done',
-	CLOSE = 'close'
+	CLOSED = 'closed'
 }
 
 export enum Permit_Enum {
@@ -45,7 +45,7 @@ export enum Permit_Enum {
 	TODO = 'todo',
 	DOING = 'doing',
 	DONE = 'done',
-	CLOSE = 'close'
+	CLOSE = 'closed'
 }
 
 export enum Context_Key {

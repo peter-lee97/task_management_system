@@ -62,6 +62,13 @@ export const validateApplication = (inputs: {
 	}
 
 	if (!inputs.rNumber) return 'App_Rnumber is required';
+
+	if (!/^[1-9]\d*$/.test(inputs.rNumber.toString())) {
+		return 'App_Rnumber must be a positive integer';
+	}
+
+	if (inputs.rNumber > 2 ** 8) return `App_Rnumber cannot be greater than ${2 ** 8}`;
+
 	if (inputs.appAcronym.length == 0 || inputs.appAcronym.length > 50) {
 		return 'App_Acronym must be within 1 and 50 characters';
 	}

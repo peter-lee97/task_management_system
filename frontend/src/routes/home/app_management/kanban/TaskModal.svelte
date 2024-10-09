@@ -357,7 +357,7 @@
 					<button
 						class="promote-btn"
 						on:click={() => {
-							newTaskState = Task_State.CLOSE;
+							newTaskState = Task_State.CLOSED;
 							updateHandler();
 						}}
 						disabled={task.Task_plan != newTaskPlan}
@@ -377,7 +377,7 @@
 			{/if}
 
 			{#if task}
-				<button on:click={updateHandler} disabled={task?.Task_state == Task_State.CLOSE}>
+				<button on:click={updateHandler} disabled={task?.Task_state == Task_State.CLOSED}>
 					Save Changes
 				</button>
 			{/if}

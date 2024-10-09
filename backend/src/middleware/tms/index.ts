@@ -169,7 +169,7 @@ export const validateTaskChange = async (
             )
           : inGroup;
         break;
-      case Task_State.CLOSE:
+      case Task_State.CLOSED:
         inGroup = false;
         errorMessage = "Closed task cannot be updated";
         break;
@@ -215,7 +215,7 @@ export const validateTaskChange = async (
   }
   if (
     existingTask.Task_state == Task_State.DONE &&
-    newTask.Task_state == Task_State.CLOSE &&
+    newTask.Task_state == Task_State.CLOSED &&
     tmsApp.App_permit_Done != null &&
     (await UserGroupDB.Checkgroup(payload.username, tmsApp.App_permit_Done))
   ) {

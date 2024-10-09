@@ -17,6 +17,7 @@ import { fetchAllApplications, fetchApplication } from "../../services/db/tms";
 import { fetchByGroupname } from "../../services/db/user_group";
 import { verifyToken } from "../../services/jwt";
 import { getTransporter, sendMail } from "../../services/nodemailer";
+import { generateSystemNotes } from "../../services/utils";
 
 export const createApp = async (req: Request, res: Response): Promise<void> => {
   console.log(`[createApp]`);
@@ -31,8 +32,16 @@ export const createApp = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
+  if (newApp.App_Rnumber > 2 ** 8) {
+    res.status(400).json({
+      message: `App_Rnumber cannot be greater than ${newApp.App_Rnumber}`,
+    });
+    return;
+  }
+
   // check if exists
   const appExists = await TMSDB.checkApplicationExists(db, newApp.App_Acronym);
+
   if (appExists) {
     res.status(400).json({ message: "App_Acronym already exists" });
     return;
@@ -455,7 +464,7 @@ export const updateTask = async (req: Request, res: Response) => {
   if (updateTask.Task_plan != undefined) {
     if (
       existingTask.Task_state == Task_State.DONE &&
-      updateTask.Task_state == Task_State.CLOSE
+      updateTask.Task_state == Task_State.CLOSED
     ) {
       res.status(400).json({
         message:
@@ -528,8 +537,7 @@ export const updateTask = async (req: Request, res: Response) => {
             username: "tms service",
           },
           `[${app.App_Acronym}] Task Completion`,
-          `Dear PLs,  \n${updatedTask.Task_owner} has completed task ${updatedTask.Task_id}.\n\n-- This is a system generated email. DO NOT REPLY --\nRegards, \nTMS service
-          `
+          `Dear PLs,  \n${updatedTask.Task_owner} has completed task ${updatedTask.Task_id}.\n\n-- This is a system generated email. DO NOT REPLY --\nRegards, \nTMS service`
         );
       });
     }
@@ -612,14 +620,4 @@ export const fetchActions = async (req: Request, res: Response) => {
     message: "success",
     result: Array.from(actions.values()),
   });
-};
-
-const generateSystemNotes = (i: { username: string; currentState: string }) => {
-  const dt = new Date();
-  const dateString = dt.toISOString().substring(0, 10);
-  const timeString =
-    dt.getHours().toString().padStart(2, "0") +
-    ":" +
-    dt.getMinutes().toString().padStart(2, "0");
-  return `[Edited by: ${i.username} | Current State: ${i.currentState} | ${dateString} ${timeString}]\n`;
 };

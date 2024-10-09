@@ -171,7 +171,7 @@ export enum Task_State {
   TODO = "todo",
   DOING = "doing",
   DONE = "done",
-  CLOSE = "close",
+  CLOSED = "closed",
 }
 
 export enum Permits {
@@ -183,5 +183,5 @@ export enum Permits {
   TODO = "todo",
   DOING = "doing",
   DONE = "done",
-  CLOSE = "close",
+  CLOSE = "closed",
 }

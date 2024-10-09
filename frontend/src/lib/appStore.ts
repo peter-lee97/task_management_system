@@ -25,7 +25,7 @@ const _appsStore = () => {
 							logoutAccount();
 						}
 					}
-					toast(e.response?.data.message ?? 'Failed to fetch applications');
+					toast(e.response?.data.message ?? 'failed to fetch applications');
 				});
 		},
 		create: async (newApp: Application) => {
@@ -40,7 +40,8 @@ const _appsStore = () => {
 							logoutAccount();
 						}
 					}
-					toast.error(e.response?.data.message ?? 'Failed to create application');
+					toast.error(e.response?.data.message ?? 'failed to create application');
+					throw 'failed to create application';
 				});
 		},
 		updateApp: async (app: ApplicationUpdate) => {

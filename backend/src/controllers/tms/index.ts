@@ -529,6 +529,7 @@ export const updateTask = async (req: Request, res: Response) => {
           })
           .filter((e) => e != null)
           .filter((e) => e.email);
+
         sendMail(
           getTransporter,
           withValidEmails,

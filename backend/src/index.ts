@@ -5,6 +5,7 @@ import express from "express";
 
 import { auth, demo, tms, usergroup } from "./routes/";
 import createConnection, { getDb } from "./services/db";
+import { createTransporter, getTransporter } from "./services/nodemailer";
 
 // configures dotenv to work in your application
 config();
@@ -18,16 +19,29 @@ app.use(cookieParser());
 
 const PORT = process.env.PORT as string;
 const ENV = process.env.ENV as string;
+const host = process.env.DB_HOST as string;
 const username = process.env.USERNAME as string;
 const password = process.env.PASSWORD as string;
 const database = process.env.DATABASE as string;
 
-createConnection({
-  host: `localhost`,
-  password,
-  username,
-  database,
-});
+try {
+  createConnection({
+    host: host,
+    password,
+    username,
+    database,
+  });
+} catch (error) {
+  console.error(error);
+}
+
+createTransporter(
+  process.env.EMAIL_HOST as string,
+  parseInt(process.env.EMAIL_PORT as string)
+);
+getTransporter
+  .verify()
+  .then((e) => console.log(`nodemailer established: ${e}`));
 
 const init = async () => {
   app.get("/", (_, response) => {
@@ -46,6 +60,8 @@ const init = async () => {
 
   app
     .listen(PORT, () => {
+      const script = process.env.npm_lifecycle_event;
+      if (script) console.log(`Current script: ${script}`);
       console.log(`Environment: ${ENV}`);
       console.log("Server running at PORT:", PORT);
     })

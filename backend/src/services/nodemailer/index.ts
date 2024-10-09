@@ -2,10 +2,14 @@ import nodemailer from "nodemailer";
 import type { Account } from "../../model";
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-
-export const getTransporter = nodemailer.createTransport({
-  port: 1025,
-});
+export let getTransporter: nodemailer.Transporter;
+export function createTransporter(host: string, port: number): void {
+  console.log(`nodemailer url: ${host}:${port}`);
+  getTransporter = nodemailer.createTransport({
+    host,
+    port,
+  });
+}
 
 export const sendMail = (
   transporter: nodemailer.Transporter,

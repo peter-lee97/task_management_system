@@ -1,11 +1,5 @@
 import { RowDataPacket } from "mysql2/promise";
 
-declare module "express-serve-static-core" {
-  interface Request {
-    accountPayload?: AccountPayload;
-  }
-}
-
 export interface AccountPayload {
   username: string;
   ipAddress: string | undefined;

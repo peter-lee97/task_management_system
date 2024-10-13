@@ -15,16 +15,56 @@
     - `docker pull maildev/maildev`
   - To Run: `docker run -p 1080:1080 -p 1025:1025 maildev/maildev`
 
-```bash
-curl --location 'localhost:3000/api/v1/demo/CreateTask' \
---header 'Content-Type: application/json' \
---data '{
-    "username": "pl",
-    "password": "abc123!!",
-    "appAcronym": "Youtube",
-    "taskName": "New Recommendation Feature",
-    "description": "Improve the current recommendation feature with a new AI algorithm",
-    "taskNotes": "Getting this as a beta version would be good",
-    "taskPlan": "sprint 1"
-}'
-```
+Check who if admin right
+
+- `cat /etc/passwd | grep <app_user>`
+
+- TODO: Check how to remove home directory for user
+
+### Docker commands
+
+1. Build `docker build -f <Dockerfile name> .`
+2. Create Container `docker run --name <container_name> <image_name>`
+
+#### Dockerise backend (preparing internet to dev env)
+
+- Build image: `docker build -f Dockerfile.i2e -t tms-backend .`
+
+- Create container from image: `docker run  --env-file ./.env -d -p 3000:3000 --name tms-backend-container tms-backend`
+- Create container from image (With auto remove): `docker run --env-file ./.env -d -p 3000:3000 --rm --name tms-backend-container tms-backend`
+
+- Start existing container: `docker start tms-backend-container`
+
+- Stop container: `docker stop tms-backend-container`
+
+#### Airgap Preparation (With Internet)
+
+1. `cd prep`
+
+Donwload imag form docker hub
+
+- pull base image from dockerhub repo: `docker image pull node:20-alpine`
+- save image to tar file and compress: `docker save node:20-alpine | gzip > node-alpine-20.tar.gz`
+
+=== Air Gap ===
+
+> Clear cache to ensure loading from local file `docker image rm <image name>`
+
+1. Install docker image from local repo
+   `docker load < ./base_image/njs-image.tar.gz`
+   `docker load < <filename>`
+   `docker load --input <filename>`
+
+#### Dockerise (DEV env)
+
+- Build Image: `docker build -f Dockerfile.d2p -t tms-backend-dev .`
+- Create container from image (auto remove): `docker run --env-file ./.env -d -p 3001:3000 --rm --name tms-backend-container-dev tms-backend-dev`
+- Stop container: `docker stop tms-backend-container-dev`
+
+#### Dockerise (PRODD env)
+
+Using **Dockerfile** for production build
+
+- Build Image `docker build -t tms-production .`
+- Create Container (auto remove) `docker run --rm -p 3000:3000 --env-file .env --name tms-prod tms-production`
+- # Stop Container `docker stop tms-prod`

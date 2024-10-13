@@ -1,6 +1,9 @@
-scripts
-node_modules
+scripts/
+node_modules/
+dist/
 
-dist
+nodemon.json
+
+Dockerfile*
 
 .gitignore

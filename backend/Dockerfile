@@ -1,15 +1,32 @@
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 
-WORKDIR /usr/app
+WORKDIR /app
 
-COPY . /usr/app/
+RUN mkdir -p my_packages
 
-COPY .env /usr/app/.env
+# Includes dev dependencies
+COPY ../prep/my_packages /app/my_packages
 
-RUN npm install
 
-RUN npm run build
+COPY tsconfig.json /app/tsconfig.json
 
-EXPOSE 3000
+RUN npm i /app/my_packages/backend-*.tgz 
 
-CMD ["npm", "run", "start"]
+COPY package.json /app/package.json
+RUN diff package.json ./node_modules/backend/package.json || exit 1
+
+RUN npm dedupe
+
+COPY src/ /app/
+RUN npx tsc
+
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+COPY --from=builder /app/dist /app/dist
+COPY --from=builder /app/package*.json /app/
+
+RUN npm install --only=production
+
+CMD ["node", "dist/index.js"]

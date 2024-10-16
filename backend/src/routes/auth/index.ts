@@ -13,33 +13,37 @@ import { verifyToken } from "../../services/jwt";
 
 const router = express.Router();
 
-router.get("/validate", validateCookie, async (req, res) => {
-  console.log("[validate]");
-  if (!req.cookies["token"]) {
-    res.status(401).json({ message: "Unauthorized to access route" });
+router.get(
+  "/validate",
+  validateCookie,
+  async (req: express.Request, res: express.Response) => {
+    console.log("[validate]");
+    if (!req.cookies["token"]) {
+      res.status(401).json({ message: "Unauthorized to access route" });
+      return;
+    }
+
+    const payload = verifyToken(
+      req.cookies.token,
+      process.env.ENV_SECRET as string
+    );
+
+    if (payload == null) {
+      res.status(401).json({ message: "Unauthorized to access route" });
+      return;
+    }
+
+    const db = getDb();
+    const account = await AccountDB.fetchUser(db, payload.username);
+
+    res.status(200).json({
+      message: "successful",
+      result: account,
+      isAdmin: await UserGroupDB.Checkgroup(payload.username, "admin"),
+    });
     return;
   }
-
-  const payload = verifyToken(
-    req.cookies.token,
-    process.env.ENV_SECRET as string
-  );
-
-  if (payload == null) {
-    res.status(401).json({ message: "Unauthorized to access route" });
-    return;
-  }
-
-  const db = getDb();
-  const account = await AccountDB.fetchUser(db, payload.username);
-
-  res.status(200).json({
-    message: "successful",
-    result: account,
-    isAdmin: await UserGroupDB.Checkgroup(payload.username, "admin"),
-  });
-  return;
-});
+);
 
 router.post("/login", login);
 router.post("/logout", logout);

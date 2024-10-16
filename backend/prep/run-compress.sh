@@ -35,18 +35,20 @@ TARBALL=$(npm pack)
 echo "Production Tarball: $TARBALL"
 
 echo '[devDependencies]'
+# Explictly insert the content
 devDependencies=(
   "@types/bcryptjs"
   "@types/cookie-parser"
   "@types/cors"
-  "@types/express"
   "@types/jsonwebtoken"
   "@types/mysql"
-  "@types/node"
+  "@types/node@22.5.4"
   "@types/nodemailer"
+  "@types/express-serve-static-core@4.19.0"
+  "@types/express@4.17.21"
   # "nodemon"
-  "ts-node"
-  "typescript"
+  "ts-node@10.9.2"
+  "typescript@5.6.2"
 )
 
 for dep in "${devDependencies[@]}"; do

@@ -1,5 +1,5 @@
 import type { Task } from '$models';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 
 export const CreateTask = async (
 	username: string,
@@ -33,27 +33,6 @@ export const CreateTask = async (
 	return null;
 };
 
-CreateTask(
-	'pl',
-	'abc123!!',
-	'Youtube',
-	'Add to Playlist Feature',
-	'Implement new feature to add videos into playlist feature',
-	'Starting new task, need to get it out ASAP',
-	'sprint 1'
-)
-	.then((tid) => {
-		if (tid == null) return; // do nothing
-		console.log(`task created: ${tid}`);
-	})
-	.catch((e) => {
-		let errorMsg = 'Unexpected Error';
-		if (e instanceof AxiosError) {
-			errorMsg = e.response?.data.msgCode ?? 'failed to create task';
-		}
-		console.error(errorMsg);
-	});
-
 export const GetTaskByState = async (
 	username: string,
 	password: string,
@@ -78,18 +57,6 @@ export const GetTaskByState = async (
 	}
 	return [];
 };
-
-GetTaskByState('pl', 'abc123!!', 'open', 'youtube')
-	.then((result) => {
-		console.log(`open state: ${result.length}`);
-	})
-	.catch((e) => {
-		let errorMsg = 'Unexpected Error';
-		if (e instanceof AxiosError) {
-			errorMsg = e.response?.data.msgCode ?? 'failed to create task';
-		}
-		console.error(errorMsg);
-	});
 
 export const PromoteTask2Done = async (
 	username: string,
@@ -117,22 +84,3 @@ export const PromoteTask2Done = async (
 	}
 	return null;
 };
-
-PromoteTask2Done(
-	'pl',
-	'abc123!!',
-	'YouTube',
-	'YouTube_3',
-	'I have completed my task, please take a look!'
-)
-	.then((tid) => {
-		if (tid == null) return; // do nothing
-		console.log(`task created: ${tid}`);
-	})
-	.catch((e) => {
-		let errorMsg = 'Unexpected Error';
-		if (e instanceof AxiosError) {
-			errorMsg = e.response?.data.msgCode ?? 'failed to create task';
-		}
-		console.error(errorMsg);
-	});

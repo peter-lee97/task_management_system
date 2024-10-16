@@ -36,3 +36,13 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+
+[node adapter](https://kit.svelte.dev/docs/adapter-node#usage)
+
+### Dockerise frontend
+
+1. Build app: `docker build -f Dockerfile.internet -t tms-fe .`
+
+- Internally uses 3000 port
+
+2. Run app: `docker run --rm -p 3001:3000 --env-file .env --name tms-fe-container tms-fe`

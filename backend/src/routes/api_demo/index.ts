@@ -1,5 +1,10 @@
-import { Router } from "express";
-import { Account, Application, Task, Task_State } from "../../model";
+import { NextFunction, Request, Response, Router } from "express";
+import {
+  type Account,
+  type Application as MyApplication,
+  type Task,
+  Task_State,
+} from "../../model";
 import { AccountDB, getDb, TMSDB, UserGroupDB } from "../../services/db";
 import { compareHash } from "../../services/jwt";
 import { getTransporter, sendMail } from "../../services/nodemailer";
@@ -8,7 +13,7 @@ import { MsgCode } from "./constant";
 
 const router = Router();
 
-router.use((req, res, next) => {
+router.use((req: Request, res: Response, next: NextFunction) => {
   console.log(`req.originalUrl: ${req.originalUrl}`);
   const validUrls: string[] = [
     "/api/demo/CreateTask",
@@ -42,9 +47,8 @@ router.use((req, res, next) => {
   return;
 });
 
-router.post("/CreateTask", async (req, res) => {
+router.post("/CreateTask", async (req: Request, res: Response) => {
   console.log("[CreateTask]");
-
   const allowedFields = [
     "username",
     "password",
@@ -183,7 +187,7 @@ router.post("/CreateTask", async (req, res) => {
   }
 });
 
-router.post("/GetTaskbyState", async (req, res) => {
+router.post("/GetTaskbyState", async (req: Request, res: Response) => {
   console.log("[GetTaskbyState]");
 
   const allowedFields = ["username", "password", "appAcronym", "taskState"];
@@ -230,7 +234,7 @@ router.post("/GetTaskbyState", async (req, res) => {
     res.status(500).json({ msgCode: MsgCode.INTERNAL });
     return;
   }
-  let app: Application | null;
+  let app: MyApplication | null;
   try {
     app = await TMSDB.fetchApplication(db, appAcronym);
   } catch (error) {
@@ -257,7 +261,7 @@ router.post("/GetTaskbyState", async (req, res) => {
   }
 });
 
-router.post("/PromoteTask2Done", async (req, res) => {
+router.post("/PromoteTask2Done", async (req: Request, res: Response) => {
   console.log("[PromoteTask2Done]");
 
   const allowedFields = [
@@ -307,7 +311,7 @@ router.post("/PromoteTask2Done", async (req, res) => {
     res.status(500).json({ msgCode: MsgCode.INTERNAL });
     return;
   }
-  let app: Application | null;
+  let app: MyApplication | null;
   try {
     app = await TMSDB.fetchApplication(db, appAcronym);
   } catch (error) {

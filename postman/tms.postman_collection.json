@@ -1,0 +1,283 @@
+{
+	"info": {
+		"_postman_id": "5f507ec8-4473-48c1-85ec-03a535e9498a",
+		"name": "tms",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "1426403"
+	},
+	"item": [
+		{
+			"name": "application",
+			"item": [
+				{
+					"name": "fetch all applications",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/api/v1/tms/fetchApplications"
+					},
+					"response": []
+				},
+				{
+					"name": "fetch user applications",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/api/v1/tms/fetchUserApplications"
+					},
+					"response": []
+				},
+				{
+					"name": "create new application",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"App_Acronym\": \"Project Singapore\",\n    \"App_Description\": \"Project Singapore for more testing\",\n    \"App_Rnumber\": 101,\n    \"App_startDate\": 1726577695,\n    \"App_endDate\": 1727009735,\n    \"App_permit_Create\": \"PL\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/api/v1/tms/createApplication"
+					},
+					"response": []
+				},
+				{
+					"name": "update application",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"App_Acronym\": \"Project 1\",\n    \"App_permit_Create\": \"PL\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/api/v1/tms/updateApplication"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "plan",
+			"item": [
+				{
+					"name": "fetch all plans",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"appAcronym\": \"Project 1\",\n    \"mvpName\": \"z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/api/v1/tms/fetchPlans"
+					},
+					"response": []
+				},
+				{
+					"name": "create plan",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"Plan_MVP_name\": \"z\",\n    \"Plan_app_Acronym\": \"Project 1\",\n    \"Plan_startDate\": 1726404895,\n    \"Plan_endDate\": 1727268895,\n    \"Plan_color\": \"#00FFD5\",\n    \"appAcronym\": \"Project 1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/api/v1/tms/createPlan"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "task",
+			"item": [
+				{
+					"name": "fetch all task",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"appAcronym\": \"project 1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/api/v1/tms/fetchTasks"
+					},
+					"response": []
+				},
+				{
+					"name": "create new task",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"Task_name\": \"Another Task\",\n    \"Task_state\": \"open\",\n    \"Task_app_Acronym\": \"Project 1\",\n    \"Task_creator\": \"PL\",\n    \"Task_owner\": \"PL\",\n    \"Task_createDate\": 1727057979,\n    \"appAcronym\": \"Project 1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/api/v1/tms/createTask"
+					},
+					"response": []
+				},
+				{
+					"name": "update task",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"Task_id\": \"Project 1_0\",\n    \"Task_description\": \"Software development is a form of art\",\n    \"Task_state\": \"open\",\n    \"appAcronym\": \"Project 1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/api/v1/tms/updateTask"
+					},
+					"response": []
+				},
+				{
+					"name": "fetchActions",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n        \"appAcronym\": \"Project 1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/api/v1/tms/fetchActions"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "demo api",
+			"item": [
+				{
+					"name": "CreateTask",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"pl\",\n    \"password\": \"abc123!!\",\n    \"appAcronym\": \"zoo\",\n    \"taskName\": \"Sexy snake\",\n    \"description\": \"Improve the current recommendation feature with a new AI algorithm\",\n    \"taskNotes\": \"Getting this as a beta version would be good\"\n    // \"taskPlan\": \"fish\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/api/demo/CreateTask"
+					},
+					"response": []
+				},
+				{
+					"name": "GetTaskbyState",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"user1\",\n    \"password\": \"abc123!!\",\n    \"taskState\": \"todo\",\n    \"appAcronym\": \"youtube\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/api/demo/GetTaskByState"
+					},
+					"response": []
+				},
+				{
+					"name": "PromoteTask2Done",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"user1\",\n    \"password\": \"abc123!!\",\n    \"taskId\": \"YouTube_3\",\n    \"appAcronym\": \"Youtube\",\n    \"taskNotes\": \"I have completed my task, please take a look!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/api/demo/PromoteTask2Done"
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "noauth"
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	]
+}

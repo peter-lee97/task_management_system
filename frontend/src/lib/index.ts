@@ -1,8 +1,9 @@
-import { PUBLIC_END_POINT, PUBLIC_PORT } from '$env/static/public';
+import { env } from '$env/dynamic/public';
 import axios from 'axios';
 
 // place files you want to import through the `$lib` alias in this folder.
-export const apiUrl = `http://${PUBLIC_END_POINT}:${PUBLIC_PORT}/api/v1`;
+export const apiUrl = `http://${env.PUBLIC_API_END_POINT}:${env.PUBLIC_API_PORT}/api/v1`;
+console.log(`api url: ${apiUrl}`);
 export const baseAPI = axios.create({
 	withCredentials: true,
 	baseURL: apiUrl,

@@ -4,12 +4,12 @@ import {
   isTaskValid,
   Permits,
   Task_State,
-  TaskInsert,
-  TaskUpdate,
-  type Application,
   type ApplicationUpdate,
+  type Application as MyApplication,
   type Plan,
   type Task,
+  type TaskInsert,
+  type TaskUpdate,
 } from "../../model";
 import { getDb, TMSDB, UserGroupDB } from "../../services/db";
 import { fetchUser } from "../../services/db/account";
@@ -23,7 +23,7 @@ export const createApp = async (req: Request, res: Response): Promise<void> => {
   console.log(`[createApp]`);
 
   const db = getDb();
-  const newApp: Application = req.body;
+  const newApp = req.body as MyApplication;
 
   if (!newApp) {
     res
@@ -62,7 +62,7 @@ export const createApp = async (req: Request, res: Response): Promise<void> => {
 
 export const updateApplication = async (req: Request, res: Response) => {
   console.log("[updateApplication]");
-  const newAppUpdate: ApplicationUpdate = req.body;
+  const newAppUpdate = req.body as ApplicationUpdate;
 
   if (!newAppUpdate) {
     res

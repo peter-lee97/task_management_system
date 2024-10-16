@@ -23,12 +23,14 @@ Check who if admin right
 
 ### Docker commands
 
-1. Build `docker build -f <Dockerfile name> .`
-2. Create Container `docker run --name <container_name> <image_name>`
+- Build `docker build -f <Dockerfile name> .`
+- Create Container `docker run --name <container_name> <image_name>`
+- Stop Container `docker stop <container_name>`
+- Remove Container `docker rm <container_name>`
 
 #### Dockerise backend (preparing internet to dev env)
 
-- Build image: `docker build -f Dockerfile.i2e -t tms-backend .`
+- Build image: `docker build -f Dockerfile.internet -t tms-backend .`
 
 - Create container from image: `docker run  --env-file ./.env -d -p 3000:3000 --name tms-backend-container tms-backend`
 - Create container from image (With auto remove): `docker run --env-file ./.env -d -p 3000:3000 --rm --name tms-backend-container tms-backend`
@@ -41,7 +43,7 @@ Check who if admin right
 
 1. `cd prep`
 
-Donwload imag form docker hub
+Download image from docker hub
 
 - pull base image from dockerhub repo: `docker image pull node:20-alpine`
 - save image to tar file and compress: `docker save node:20-alpine | gzip > node-alpine-20.tar.gz`
@@ -58,7 +60,7 @@ Donwload imag form docker hub
 #### Dockerise (DEV env)
 
 - Build Image: `docker build -f Dockerfile.d2p -t tms-backend-dev .`
-- Create container from image (auto remove): `docker run --env-file ./.env -d -p 3001:3000 --rm --name tms-backend-container-dev tms-backend-dev`
+- Create container from image (auto remove): `docker run --env-file ./.env -d -p 3000:3000 --rm --name tms-backend-container-dev tms-backend-dev`
 - Stop container: `docker stop tms-backend-container-dev`
 
 #### Dockerise (PRODD env)
@@ -67,4 +69,4 @@ Using **Dockerfile** for production build
 
 - Build Image `docker build -t tms-production .`
 - Create Container (auto remove) `docker run --rm -p 3000:3000 --env-file .env --name tms-prod tms-production`
-- # Stop Container `docker stop tms-prod`
+- Stop Container `docker stop tms-prod`

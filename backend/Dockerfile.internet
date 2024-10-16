@@ -1,0 +1,23 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy essential source files
+COPY src/ /app/src/
+COPY package.json /app/package.json
+COPY tsconfig.json /app/tsconfig.json
+
+RUN npm install
+
+RUN npx tsc
+
+# EXPOSE 3000
+
+# Create a new user `appuser` and assign it to `tmsgroup`
+RUN adduser --disabled-password --no-create-home appuser
+
+# Switch to the new user `appuser`
+USER appuser  
+
+# Entry point when container spins up
+CMD ["node", "dist/index.js"]

@@ -128,3 +128,8 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+prep/base_image/*
+prep/my_packages/*
+prep/protected_my_files
+prep/node_modules/

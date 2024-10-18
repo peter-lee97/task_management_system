@@ -1,0 +1,46 @@
+# Building application in the internet environment
+name: tms-assignment
+services:
+  mailsvc:
+    image: 'maildev/maildev'
+    ports:
+      - 1080:1080
+      - 1025:1025
+    networks:
+      - backend-network
+
+  njs-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.internet
+    depends_on:
+        mailsvc:
+          condition: service_started
+          required: true
+    image: 'tms-backend'
+    ports:
+      - 3000:3000
+    env_file:
+      - ./backend/.env
+    networks:
+      - backend-network
+  
+  svelte-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.internet
+    image: 'tms-frontend'
+    depends_on:
+      njs-backend:
+        condition: service_started
+        required: true
+    ports:
+      - 3001:3000
+    env_file:
+      - ./frontend/.env
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    driver: bridge

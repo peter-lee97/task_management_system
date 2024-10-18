@@ -5,7 +5,7 @@ import express from "express";
 
 import { auth, demo, tms, usergroup } from "./routes/";
 import createConnection, { getDb } from "./services/db";
-import { createTransporter, getTransporter } from "./services/nodemailer";
+import { createTransporter } from "./services/nodemailer";
 
 // configures dotenv to work in your application
 config();
@@ -48,16 +48,20 @@ try {
     database,
   });
 } catch (error) {
-  console.error(error);
+  console.error("error in connecting db", error);
 }
 
-createTransporter(
-  process.env.EMAIL_HOST as string,
-  parseInt(process.env.EMAIL_PORT as string)
-);
-getTransporter
-  .verify()
-  .then((e) => console.log(`nodemailer established: ${e}`));
+try {
+  createTransporter(
+    process.env.EMAIL_HOST as string,
+    parseInt(process.env.EMAIL_PORT as string)
+  );
+} catch (error) {
+  console.error("error connecting to email client", error);
+}
+// getTransporter
+//   .verify()
+//   .then((e) => console.log(`nodemailer established: ${e}`));
 
 const init = async () => {
   app.get("/", (_, response) => {
